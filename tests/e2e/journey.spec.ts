@@ -1,0 +1,37 @@
+import {test,expect} from '@playwright/test';
+test('construction journey: preview, simulated payment, grounded report, sources and exports',async({page})=>{
+ await page.goto('/');
+ await page.getByTestId('fixture-construction').click();
+ await expect(page.getByRole('heading',{name:'Dostupná dokumentace'})).toBeVisible();
+ await page.getByRole('button',{name:'Spustit demo audit',exact:true}).click();
+ await expect(page.getByRole('dialog')).toContainText('Simulovaná platba');
+ await page.getByTestId('simulate-payment').click();
+ await expect(page.getByRole('heading',{name:'Pokračovat po vyjasnění podmínek'})).toBeVisible();
+ await expect(page.locator('.calc-total')).toContainText('727');
+ await page.locator('.evidence-links button').first().click();
+ await expect(page.getByRole('dialog')).toContainText('SYNTETICKÁ DEMO');
+ await page.getByRole('button',{name:'Zavřít zdroj'}).click();
+ await page.getByRole('tab',{name:'Kvalifikace',exact:true}).click();
+ await expect(page.getByText('Chybí důkaz', {exact:true})).toBeVisible();
+ await page.getByRole('tab',{name:'Dotazy zadavateli'}).click();
+ await page.getByRole('button',{name:'Vytvořit návrh ze zjištění'}).click();
+ await expect(page.getByLabel('Upravit návrh dotazů')).toHaveValue(/N006\/26\/V00018665/);
+ const downloadPromise=page.waitForEvent('download');
+ await page.getByRole('button',{name:'Export JSON'}).click();
+ const file=await downloadPromise;
+ expect(file.suggestedFilename()).toBe('audit-N006-26-V00018665.json');
+ await page.reload();
+ await expect(page.getByRole('button',{name:'Spustit demo audit',exact:true})).toBeVisible();
+ await expect(page.getByRole('button',{name:'Export JSON'})).toHaveCount(0);
+});
+test('validation and IT fixture on mobile',async({page})=>{
+ await page.setViewportSize({width:390,height:844});await page.goto('/');
+ await page.getByLabel('Číslo veřejné zakázky').fill('not-a-reference');
+ await page.getByRole('button',{name:'Prověřit zakázku',exact:true}).click();
+ await expect(page.getByRole('alert')).toBeVisible();
+ await page.getByTestId('fixture-it').click();
+ await page.getByRole('button',{name:'Spustit demo audit',exact:true}).click();
+ await page.getByTestId('simulate-payment').click();
+ await expect(page.getByRole('heading',{name:'Pokračovat po vyjasnění podmínek'})).toBeVisible();
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+});

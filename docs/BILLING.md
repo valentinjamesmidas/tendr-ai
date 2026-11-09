@@ -1,0 +1,5 @@
+# Billing status: MOCKED / PARTIAL
+No Stripe checkout or webhook is installed. Demo simulation does not charge, grant production rights, or verify external events. Single audit CZK790 ex VAT is a configurable product assumption, not a live price.
+packages/billing is a single-process in-memory reference ledger. Tests cover duplicate grants/completion, competing reservations, release, and tenant mismatch. Only demo:-prefixed event keys accepted. These are not Stripe payment tests.
+Production transaction requirements: unique Stripe event IDs and Checkout/payment ownership; verified raw-body signature; validate amount/currency/paid state; handle asynchronous success/failure and refunds/out-of-order events; database lock/transaction for reservation/consumption; consume exactly once only after successful quality gate; failures release credit under approved policy. Redirect cannot unlock access. Refunds require approved business policy.
+Remaining matrix: real sandbox duplicate/out-of-order webhooks, no-redirect success, redirect without event, concurrent database reservations, worker retry, subscriptions/renewals/cancellation/expiry/refunds. All NOT_RUN.

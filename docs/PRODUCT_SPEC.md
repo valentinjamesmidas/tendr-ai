@@ -1,0 +1,4 @@
+# Product scope
+Czech supplier decision support: reference → synthetic preview → simulated purchase → verified fixture report → clarification/checklist/export. Construction and IT fixture data is invented and labeled; reference formatting does not mean the referenced real tender has been fetched.
+P0 production requires real authentication, organization provisioning, RLS verification, safe ingestion, durable jobs, server-side entitlements, Stripe sandbox validation, provider validation and privacy review. This delivery prioritizes the requested first runnable milestone plus an evidence-backed local demo. No legal opinion, autonomous submission, real payments or sales intelligence.
+Initial commercial assumption: single audit CZK 790 excluding VAT; no actual sale in demo. Solo/Team/PWA/company fit/subscriptions are deferred. Do not infer company eligibility from missing input.

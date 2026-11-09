@@ -1,0 +1,11 @@
+# Local operation and deployment gates
+Node22+ (24 tested), pnpm11.25.0. Run pnpm install --frozen-lockfile; pnpm dev; open http://localhost:5173. No .env or external credentials needed. pnpm build emits apps/web/dist; pnpm --filter @tendr/web preview serves the build if configured.
+No deployment performed. Before any production deployment: complete authentication, server APIs, tested migrations/RLS, private storage, durable queue/Node worker, sandbox Stripe, provider contracts, threat/retention/legal reviews and monitoring. Request user authorization before publication/live charging.
+Database development requires Docker and Supabase CLI: supabase start; supabase db reset; supabase test db. Run only against local development, never production. No Supabase CLI/Docker available during initial build. Database CI must be added with Supabase local setup before release.
+Secrets listed in .env.example are server-only placeholders. Filling them does not activate unimplemented integrations. No production runtime available to configure.
+Rollback: preserve immutable audit evidence and financial ledger, take backups before reviewed migrations, roll back frontend version independently; use tested forward corrective database migrations. Recovery is a design requirement, not exercised here.
+
+## Cloudflare Pages GitHub deployment (demo only)
+Connect repository valentinjamesmidas/tendr-ai using Pages → Connect to Git. Production branch main; root directory empty (repository root); framework None; build command pnpm build; output apps/web/dist. Set NODE_VERSION=24.22.1 and PNPM_VERSION=11.25.0 in build environment. No API keys needed. Cloudflare installs dependencies using the committed pnpm lockfile and workspace configuration. The .node-version file also pins the tested Node version.
+This deploys the static synthetic demo, not the production backend. An existing Direct Upload Pages project requires a new Git-integrated Pages project. GitHub connection and hosting activation must be completed in the user's Cloudflare account; no hosting deployment is performed by uploading repository source.
+Official references checked 2026-11-09: https://developers.cloudflare.com/pages/get-started/git-integration/ and https://developers.cloudflare.com/pages/configuration/build-image/ .

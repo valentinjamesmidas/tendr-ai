@@ -1,0 +1,6 @@
+# Security status
+Demo: synthetic in-memory data only; no credential collection, payment data, external document uploads or outbound AI requests. Frontend is not an authorization boundary. Treat output as fixture material, not legal advice.
+Database foundation: RLS, tenant constraints and private storage; see DATA_MODEL. NOT_RUN pending local Supabase. Do not deploy untested migration. Production must include JWT verification, provisioning, membership ownership checks, signed downloads, secure service credentials, rate limits, input/schema validation, SSRF protection on every redirect, file type/size/archive expansion limits, safe extraction sandboxing, retention/deletion and logging controls.
+Prompt injection boundary: source content is data; current mock has no tools. Live provider must use trusted instructions separately, validate output, verify evidence, enforce budget/timeout and forbid document-driven tool execution.
+NEEDS_LEGAL_REVIEW: operator identity (MicroSaaS Ltd. is unverified), privacy notice, GDPR lawful basis and processor agreements, source terms, procurement references including §98, limitation of liability, billing/VAT, retention and customer status. No completed legal review claimed.
+Do not put service-role, Stripe, Gemini or Apify keys into VITE variables. Never log document contents or secrets.

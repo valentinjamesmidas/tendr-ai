@@ -1,0 +1,4 @@
+# Demo troubleshooting
+Unknown reference: choose one of the labeled construction/IT fixtures. No real NEN lookup exists. Invalid reference: correct N006/YY/V######## format. Source mismatch: inspect version/locator/quote; do not mark unsupported evidence verified. Demo restart clears session state. No payment is taken.
+Install: use pnpm11 with Node22+. Browser tests require pnpm exec playwright install chromium. If browser dependencies absent use pnpm exec playwright install --with-deps chromium on an appropriate host.
+Production incident operations remain blocked until there is a real deployment. Required future controls: job lease/heartbeat inspection, finite retries/dead letters, event replay deduplication, reconciliation, source/provider timeouts, cost budgets and correlation IDs. No sensitive text in logs.

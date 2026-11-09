@@ -1,0 +1,14 @@
+{
+  "name": "@tendr/domain",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "@tendr/schemas": "workspace:*",
+    "@tendr/rules": "workspace:*",
+    "@tendr/sources": "workspace:*",
+    "@tendr/ai": "workspace:*",
+    "@tendr/verification": "workspace:*"
+  }
+}
