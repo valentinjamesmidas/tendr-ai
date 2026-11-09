@@ -29,3 +29,6 @@ No production publication, live charges or outbound communication performed. No 
 3. Add safe ingestion and durable worker; then transactional billing and Stripe sandbox. See IMPLEMENTATION_PLAN for acceptance dependencies.
 
 Startup: pnpm install --frozen-lockfile && pnpm dev. Open http://localhost:5173. No environment variables required for demo. Deployment prerequisites in DEPLOYMENT.md; runtime operations in RUNBOOK.md.
+
+## Cloudflare Workers configuration fix
+Added root wrangler.jsonc for the existing Worker project tendr-ai. The current npx wrangler deploy command now invokes pnpm build via Wrangler custom-build configuration, publishes apps/web/dist as static assets, and applies SPA fallback. No separate dashboard build command required. Verified locally with npx --yes wrangler@4 deploy --dry-run using Wrangler4.158.0: Vite build and static-asset discovery PASS; no upload performed during verification. A separate pnpm build also passed. Live Cloudflare deployment status is not yet verified.

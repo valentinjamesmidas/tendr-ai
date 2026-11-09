@@ -37,3 +37,7 @@ Exporty: JSON report, Markdown zdroje/checklist a TXT návrh dotazů; Tisk/PDF p
 Supabase migrace a negativní SQL testy jsou připravený základ, zatím nejsou připojené k aplikaci. Docker ani Supabase CLI zde nejsou dostupné; databázové testy nebyly spuštěny. Přihlášení, skutečné NEN/Apify/Gemini integrace, Stripe webhook, trvalá fronta a worker zbývají. Produkt není připravený pro produkční provoz.
 
 Přesný stav a výsledky kontrol: [docs/PROGRESS.md](docs/PROGRESS.md). Architektura: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Následující práce: [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md).
+
+## Cloudflare Workers
+
+Repozitář obsahuje `wrangler.jsonc` pro aktuální projekt Worker `tendr-ai`. Příkaz `npx wrangler deploy` nejprve automaticky spustí `pnpm build` a potom nahraje `apps/web/dist`. V dashboardu může pole Build command zůstat prázdné; Deploy command ponechte `npx wrangler deploy`, kořen `/`. Tato konfigurace nasazuje pouze statické demo.

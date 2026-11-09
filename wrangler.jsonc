@@ -1,0 +1,11 @@
+{
+  "name": "tendr-ai",
+  "compatibility_date": "2026-11-09",
+  "build": {
+    "command": "pnpm build"
+  },
+  "assets": {
+    "directory": "./apps/web/dist",
+    "not_found_handling": "single-page-application"
+  }
+}
