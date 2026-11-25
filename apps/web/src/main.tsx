@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, useNavigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Link, useNavigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider, useMutation } from '@tanstack/react-query';
-import { ArrowUpRight, ArrowRight, FileText, ShieldCheck, Search, Building2, Check, CheckCircle2, ChevronRight, Download, X, CircleAlert, Layers3, Calculator, LayoutDashboard, ListChecks, MessageSquareText, FolderOpen, ExternalLink, LoaderCircle, Copy, Printer } from 'lucide-react';
+import { ArrowUpRight, ArrowRight, FileText, ShieldCheck, Building2, Check, CheckCircle2, ChevronRight, Download, X, CircleAlert, Layers3, Calculator, LayoutDashboard, ListChecks, MessageSquareText, FolderOpen, ExternalLink, LoaderCircle, Copy, Printer } from 'lucide-react';
 import { fixtures, normalizeReference, formatMoney, runAudit, calculateExposure } from '@tendr/domain';
 import type { Tender, SourceDocument } from '@tendr/schemas';
 import { createOfferDraft, getOfferRequirements } from './offer-draft';
 import { OfferPackage } from './offer-package';
+import { Landing } from './landing';
 import './styles.css';
 
 const offerPriceMinor = 999_900;
@@ -43,7 +44,17 @@ function App(){
  const checklist=tender&&result?checklistItems(tender,result.requirements):[];
 
  function openTender(value:string){try{const normalized=normalizeReference(value);if(!fixtures.some((t:Tender)=>t.reference===normalized))throw new Error('V demo režimu jsou dostupné pouze níže uvedené syntetické zakázky.');setError('');setInput(normalized);navigate(`/?reference=${encodeURIComponent(normalized)}`);window.scrollTo(0,0);}catch(e){setError(e instanceof Error?e.message:'Zadejte platné číslo zakázky.');}}
- function home(){navigate('/');setError('');setInput('');}
+ function home(){
+  navigate('/');
+  setError('');
+  setInput('');
+  window.scrollTo(0,0);
+ }
+ useEffect(()=>{
+  if(!ref&&location.hash){
+   document.getElementById(location.hash.slice(1))?.scrollIntoView?.();
+  }
+ },[location.hash,location.key,ref]);
  useEffect(()=>{
   resetAudit();
   setSource(null);setPaywall(false);setEditedOffer(null);setReviewed(false);setDraft('');setChecked([]);
@@ -52,20 +63,27 @@ function App(){
  useEffect(()=>{if(!source&&!paywall)return;const previous=document.activeElement as HTMLElement|null;const timer=setTimeout(()=>document.querySelector<HTMLElement>('[role=dialog] button')?.focus(),0);const keydown=(e:KeyboardEvent)=>{if(e.key==='Escape'&&!audit.isPending){setPaywall(false);setSource(null);}if(e.key==='Tab'){const nodes=Array.from(document.querySelectorAll<HTMLElement>('[role=dialog] button:not([disabled]),[role=dialog] textarea,[role=dialog] input'));const first=nodes[0],last=nodes[nodes.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus();}}};document.addEventListener('keydown',keydown);return()=>{clearTimeout(timer);document.removeEventListener('keydown',keydown);previous?.focus();};},[source,paywall,audit.isPending]);
  const calculation=tender?calculateExposure({valueMinor:tender.valueMinor,penaltyBps:tender.penaltyBps,retentionBps:tender.retentionBps,days}):null;
  function generateDraft(){if(!tender||!report)return;setDraft(`Věc: Žádost o vysvětlení zadávací dokumentace – ${tender.reference}\n\nVážení,\n\nv souvislosti se zakázkou „${tender.title}“ si dovolujeme požádat o vysvětlení následujících bodů zadávací dokumentace:\n\n${report.findings.map((f,i)=>`${i+1}. ${f.title}\n${f.action}\nPodklad: ${f.evidence.map(e=>`${tender.documents.find(d=>d.id===e.documentId)?.name ?? e.documentId}, ${e.locator}: „${e.quote}“`).join('; ')}`).join('\n\n')}\n\nDěkujeme za upřesnění.\n\n[Jméno a společnost]\n\nPRACOVNÍ NÁVRH – syntetická demo data. Před odesláním ověřte věcnou správnost, právní základ a lhůtu. Tento návrh nebyl odeslán.`);setTab('clarification');}
- return <><header className="topbar"><div className="topbar-inner"><button className="brand" onClick={home} aria-label="tendr.ai úvod"><span className="brand-mark"><Layers3 size={22}/></span>tendr<span>.ai</span></button><nav aria-label="Hlavní navigace"><button onClick={home}>Jak to funguje</button><button onClick={()=>{home();setTimeout(()=>document.getElementById('pricing')?.scrollIntoView({behavior:'smooth'}),50);}}>Ceník</button></nav><div className="header-end"><span className="demo-pill"><span/> Demo prostředí</span><button className="help-link" onClick={()=>{home();setTimeout(()=>document.getElementById('faq')?.scrollIntoView({behavior:'smooth'}),50);}}>O demo prostředí <ArrowUpRight size={15}/></button></div></div></header>
- <div className="demo-banner"><ShieldCheck size={14}/><span>Ukázková data. Platba i kontrola specialistkou jsou simulované.</span></div>
- {!tender?<main className="landing">{ref&&<p role="alert" className="error">Tato zakázka není v demo prostředí dostupná. Vyberte některou ze syntetických ukázek níže.</p>}<section className="hero"><h1>Nabídka na klíč<br/>do <em>veřejné zakázky</em></h1><p className="hero-copy">Pro malé firmy a živnostníky. Ze zadávací dokumentace připravíme formuláře a přílohy ke zkompletování. Výstup před předáním projde kontrolou specialistky.</p><form className="search-form" onSubmit={e=>{e.preventDefault();openTender(input);}}><Search size={21}/><label className="sr-only" htmlFor="reference">Číslo veřejné zakázky</label><input id="reference" value={input} onChange={e=>setInput(e.target.value)} placeholder="Zadejte číslo NEN, např. N006/26/V00018665"/><button className="primary" type="submit">Otevřít zakázku <ArrowRight size={17}/></button></form>{error&&<p role="alert" className="error">{error}</p>}<div className="search-hint"><ShieldCheck size={14}/> {offerPrice} za nabídku <span>·</span> Bez provize z výsledku zakázky</div></section>
- <section className="demo-section"><div className="section-line"><div><h2>Vyzkoušejte přípravu nabídky</h2></div><span className="subtle">Ukázkové syntetické zakázky</span></div><div className="tender-grid">{fixtures.map((t:Tender)=><button className="tender-card" key={t.reference} onClick={()=>openTender(t.reference)} data-testid={`fixture-${t.sector}`}><div className="card-top"><span className={`sector-icon ${t.sector}`}><Building2 size={21}/></span><span className="tag">{t.sector==='construction'?'Stavební práce':'IT a technologie'}</span><ArrowUpRight className="card-arrow" size={19}/></div><div className="mono small">{t.reference}</div><h3>{t.title}</h3><p>{t.authority}</p><div className="card-bottom"><div><small>Předpokládaná hodnota</small><strong>{formatMoney(t.valueMinor)}</strong></div><span>{t.documents.length} dokumenty <ChevronRight size={15}/></span></div></button>)}</div></section>
- <section className="benefits">
-  <div><FolderOpen size={22}/><h3>Zadejte zakázku písemně</h3><p>Stačí odkaz na zakázku z NEN nebo E-ZAK. Doplňující podklady se řeší písemně.</p></div>
-  <div><FileText size={22}/><h3>Připravíme podklady a formuláře</h3><p>Zpracujeme požadavky s odkazy na zdroje, připravíme formuláře a předáme je specialistce ke kontrole.</p></div>
-  <div><ListChecks size={22}/><h3>Doplníte cenu a podáte nabídku</h3><p>Dostanete balíček a kontrolní seznam. Doplníte cenu, připojíte své doklady a nabídku podepíšete a podáte.</p></div>
- </section>
- <section className="pricing" id="pricing">
-  <div><h2>Pevná cena za přípravu nabídky</h2><p>Příprava formulářů, matice požadavků, kontrolní seznam a kontrola specialistkou.<br/>Bez provize z výsledku zakázky.</p></div>
-  <div className="price-card"><span>Příprava jedné nabídky</span><div className="price">{offerPrice}</div><p>Ukázku si můžete vyzkoušet zdarma.</p><button className="primary" onClick={()=>openTender(fixtures[0].reference)}>Vyzkoušet ukázku <ArrowRight size={17}/></button></div>
- </section>
- <details className="faq" id="faq"><summary>Co demo umí a kde jsou jeho hranice?</summary><p>Na syntetické zakázce projdete od zadávacích dokumentů přes simulovanou kontrolu až po balíček ke stažení. Ukázka používá připravené dokumenty a simulovanou platbu. V ostré službě cenu doplní a nabídku podá dodavatel.</p></details></main>:<main className={report&&tab==='offer'&&reviewed?'workspace offer-print-view':'workspace'}><div className="breadcrumb"><button onClick={home}>Zakázky</button><ChevronRight size={13}/><span>{tender.reference}</span><span className="tag demo-tag">Syntetická ukázka</span></div><section className="tender-heading"><div><div className="eyebrow">{tender.sector==='construction'?'STAVEBNÍ PRÁCE':'IT A TECHNOLOGIE'}</div><h1>{tender.title}</h1><p><Building2 size={15}/>{tender.authority}<span className="dot">·</span><span className="mono">{tender.reference}</span></p></div><div className="heading-actions">{report?<><button className="secondary" onClick={()=>download(`audit-${tender.reference.replaceAll('/','-')}.json`,JSON.stringify({tender,report},null,2),'application/json')}><Download size={16}/> Export JSON</button>{(tab!=='offer'||reviewed)&&<button className="primary" onClick={()=>window.print()}><Printer size={16}/> Tisk sekce / PDF</button>}</>:<button className="primary" onClick={()=>setPaywall(true)}>Připravit ukázkovou nabídku <ArrowRight size={17}/></button>}</div></section>
+ return <>
+ <header className="topbar">
+  <div className="topbar-inner">
+   <button className="brand" onClick={home} aria-label="tendr.ai úvod"><span className="brand-mark"><Layers3 size={20}/></span>tendr<span>.ai</span></button>
+   <nav aria-label="Hlavní navigace">
+    <Link to="/#postup">Jak to funguje</Link>
+    <Link to="/#ukazky">Ukázkové zakázky</Link>
+    <Link to="/#pricing">Ceník</Link>
+   </nav>
+   <Link className="primary header-cta" to="/#ukazky">Otevřít demo <ArrowUpRight size={16}/></Link>
+  </div>
+ </header>
+ {tender&&<div className="demo-banner"><ShieldCheck size={14}/><span>Ukázková data. Platba i kontrola specialistkou jsou simulované.</span></div>}
+ {!tender?<Landing
+  price={offerPrice}
+  reference={input}
+  invalidReference={!!ref}
+  error={error}
+  onReferenceChange={setInput}
+  onOpenTender={openTender}
+ />:<main className={report&&tab==='offer'&&reviewed?'workspace offer-print-view':'workspace'}><div className="breadcrumb"><button onClick={home}>Zakázky</button><ChevronRight size={13}/><span>{tender.reference}</span><span className="tag demo-tag">Syntetická ukázka</span></div><section className="tender-heading"><div><div className="eyebrow">{tender.sector==='construction'?'STAVEBNÍ PRÁCE':'IT A TECHNOLOGIE'}</div><h1>{tender.title}</h1><p><Building2 size={15}/>{tender.authority}<span className="dot">·</span><span className="mono">{tender.reference}</span></p></div><div className="heading-actions">{report?<><button className="secondary" onClick={()=>download(`audit-${tender.reference.replaceAll('/','-')}.json`,JSON.stringify({tender,report},null,2),'application/json')}><Download size={16}/> Export JSON</button>{(tab!=='offer'||reviewed)&&<button className="primary" onClick={()=>window.print()}><Printer size={16}/> Tisk sekce / PDF</button>}</>:<button className="primary" onClick={()=>setPaywall(true)}>Připravit ukázkovou nabídku <ArrowRight size={17}/></button>}</div></section>
  {error&&<p role="alert" className="error">{error}</p>}
  <div className="summary-grid"><div className="metric"><span>Předpokládaná hodnota</span><strong>{formatMoney(tender.valueMinor)}</strong><small>Bez DPH · syntetický údaj</small></div><div className="metric"><span>Lhůta pro podání nabídky</span><strong>{deadlineFormat.format(new Date(tender.deadline))}</strong><small>Ukázkový termín</small></div><div className="metric"><span>Zadávací dokumentace</span><strong>{tender.documents.length} dokumenty</strong><small><CheckCircle2 size={12}/> Připravené demo podklady</small></div><div className="metric"><span>{report?'Ověření citovaných pasáží':'Stav nabídky'}</span><strong className={report?'green':''}>{report?`${report.verification.passed} / ${report.verification.total}`:'Připraveno ke zpracování'}</strong><small>{report?'Nedokládá správnost právního výkladu':'Návrh ještě nebyl vytvořen'}</small></div></div>
  {!report?<section className="preview-layout"><div className="panel"><div className="panel-title"><FolderOpen size={19}/><h2>Dostupná dokumentace</h2><span className="count">{tender.documents.length}</span></div><p className="panel-copy">Z těchto podkladů vychází návrh nabídky i přehled požadavků.</p>{tender.documents.map(d=><button className="document-row" key={d.id} onClick={()=>setSource(d)}><span className="file-icon"><FileText size={19}/></span><span><strong>{d.name}</strong><small>Verze {d.version} · syntetický zdroj</small></span><ExternalLink size={16}/></button>)}</div><aside className="panel audit-promo"><span className="sector-icon"><ShieldCheck size={25}/></span><h2>Co získáte k nabídce</h2>{['Matice požadavků s citacemi','Pracovní formuláře a kontrolní seznam','Podklady k vyjasnění se zadavatelem','Ukázka kontroly a předání balíčku'].map(x=><div className="check-line" key={x}><Check size={16}/>{x}</div>)}<button className="primary full" onClick={()=>setPaywall(true)}>Spustit ukázku <ArrowRight size={16}/></button><small>{offerPrice} za nabídku · ukázka zdarma</small></aside></section>:<><div className="tabs" role="tablist" aria-label="Sekce přípravy nabídky">{tabs.map(t=><button key={t.id} role="tab" aria-selected={tab===t.id} onClick={()=>setTab(t.id)} className={tab===t.id?'active':''}><t.icon size={16}/>{t.label}</button>)}</div>
@@ -86,7 +104,11 @@ function App(){
  {tab==='checklist'&&<section className="panel"><div className="panel-title"><CheckCircle2 size={19}/><h2>Checklist přípravy nabídky</h2></div><p className="panel-copy">Váš pracovní postup pro tuto relaci. Zaškrtnutí neověřuje splnění zadávacích podmínek.</p>{checklist.map((item,i)=><label className="checklist-row" key={`${i}-${item}`}><input type="checkbox" checked={checked.includes(String(i))} onChange={()=>setChecked(c=>c.includes(String(i))?c.filter(x=>x!==String(i)):[...c,String(i)])}/><span>{item}</span></label>)}<button className="secondary" onClick={()=>download('checklist.md',`# Checklist – ${tender.reference}\n\nSyntetická ukázka; vyžaduje ruční kontrolu.\n\n${checklist.map((x,i)=>`- [${checked.includes(String(i))?'x':' '}] ${x}`).join('\n')}`,'text/markdown;charset=utf-8')}><Download size={16}/> Export checklistu</button></section>}
  <div className="report-footnote"><ShieldCheck size={16}/><div><strong>Transparentní podklady, odborné rozhodnutí.</strong><p>Zdrojová shoda potvrzuje dohledatelnost pasáže, nikoli správnost právního výkladu. Demo report není právním posudkem. AI: {report.model}; pravidla: {report.ruleVersion}; vytvořeno: {date(report.createdAt)}.</p></div></div></>}
  </main>}
- <footer><button className="brand footer-brand" onClick={home}>tendr<span>.ai</span></button><p>Příprava nabídek pro veřejné zakázky.</p><span>Lokální demo · syntetická data · © 2026</span></footer>
+ <footer className="site-footer">
+  <button className="brand footer-brand" onClick={home}>tendr<span>.ai</span></button>
+  <p>Příprava nabídek pro veřejné zakázky</p>
+  <Link to="/#faq">O demo prostředí</Link>
+ </footer>
  {paywall&&tender&&<div className="modal-backdrop" onClick={()=>!audit.isPending&&setPaywall(false)}>
   <section className="modal payment-modal" role="dialog" aria-modal="true" aria-labelledby="payment-title" onClick={e=>e.stopPropagation()}>
    <button className="close" aria-label="Zavřít" onClick={()=>setPaywall(false)} disabled={audit.isPending}><X size={21}/></button>

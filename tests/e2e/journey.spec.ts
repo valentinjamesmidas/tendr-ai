@@ -50,7 +50,11 @@ test('construction journey: bid editing and export with supporting analysis',asy
  await expect(page.getByRole('button',{name:'Export JSON'})).toHaveCount(0);
 });
 test('validation and IT fixture on mobile',async({page})=>{
- await page.setViewportSize({width:390,height:844});await page.goto('/');
+ await page.setViewportSize({width:1024,height:900});await page.goto('/');
+ await expect(page.getByRole('heading',{name:/Nabídka na klíč/})).toBeVisible();
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+ await page.setViewportSize({width:390,height:844});
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
  await page.getByLabel('Číslo veřejné zakázky').fill('not-a-reference');
  await page.getByRole('button',{name:'Otevřít zakázku',exact:true}).click();
  await expect(page.getByRole('alert')).toBeVisible();
