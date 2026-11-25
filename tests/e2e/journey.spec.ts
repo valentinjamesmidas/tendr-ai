@@ -1,11 +1,36 @@
 import {test,expect} from '@playwright/test';
-test('construction journey: preview, simulated payment, grounded report, sources and exports',async({page})=>{
+import {readFile} from 'node:fs/promises';
+
+test('construction journey: bid editing and export with supporting analysis',async({page})=>{
  await page.goto('/');
  await page.getByTestId('fixture-construction').click();
  await expect(page.getByRole('heading',{name:'Dostupná dokumentace'})).toBeVisible();
- await page.getByRole('button',{name:'Spustit demo audit',exact:true}).click();
+ await page.getByRole('button',{name:'Připravit ukázkovou nabídku',exact:true}).click();
  await expect(page.getByRole('dialog')).toContainText('Simulovaná platba');
+ await expect(page.getByRole('dialog')).toContainText(/9\s999\sKč/);
  await page.getByTestId('simulate-payment').click();
+ const attachments=page.getByRole('row',{name:/Povinné přílohy/});
+ await expect(attachments).toContainText('položkový rozpočet a harmonogram');
+ await attachments.getByRole('button',{name:/Technická specifikace/}).click();
+ await expect(page.getByRole('dialog')).toContainText('Nabídka musí obsahovat položkový rozpočet a harmonogram.');
+ await page.getByRole('button',{name:'Zavřít zdroj'}).click();
+ await expect(page.getByRole('button',{name:'Stáhnout balíček nabídky'})).toHaveCount(0);
+ await page.getByRole('button',{name:'Simulovat kontrolu specialistkou'}).click();
+ const offer=page.getByRole('textbox',{name:'Upravit návrh nabídky'});
+ await expect(offer).toHaveValue(/položkový rozpočet a harmonogram/);
+ await offer.fill('Upravený pracovní návrh');
+ const bidDownloadPromise=page.waitForEvent('download');
+ await page.getByRole('button',{name:'Stáhnout balíček nabídky'}).click();
+ const bid=await bidDownloadPromise;
+ expect(bid.suggestedFilename()).toBe('nabidka-N006-26-V00018665.md');
+ expect(await readFile(await bid.path(),'utf8')).toBe('Upravený pracovní návrh');
+ await page.emulateMedia({media:'print'});
+ await expect(page.locator('.offer-print')).toBeVisible();
+ await expect(page.locator('.offer-print')).toHaveText('Upravený pracovní návrh');
+ await expect(page.getByRole('heading',{name:'Matice požadavků'})).toBeHidden();
+ await expect(offer).toBeHidden();
+ await page.emulateMedia({media:'screen'});
+ await page.getByRole('tab',{name:'Analýza podkladů'}).click();
  await expect(page.getByRole('heading',{name:'Pokračovat po vyjasnění podmínek'})).toBeVisible();
  await expect(page.locator('.calc-total')).toContainText('727');
  await page.locator('.evidence-links button').first().click();
@@ -21,17 +46,18 @@ test('construction journey: preview, simulated payment, grounded report, sources
  const file=await downloadPromise;
  expect(file.suggestedFilename()).toBe('audit-N006-26-V00018665.json');
  await page.reload();
- await expect(page.getByRole('button',{name:'Spustit demo audit',exact:true})).toBeVisible();
+ await expect(page.getByRole('button',{name:'Připravit ukázkovou nabídku',exact:true})).toBeVisible();
  await expect(page.getByRole('button',{name:'Export JSON'})).toHaveCount(0);
 });
 test('validation and IT fixture on mobile',async({page})=>{
  await page.setViewportSize({width:390,height:844});await page.goto('/');
  await page.getByLabel('Číslo veřejné zakázky').fill('not-a-reference');
- await page.getByRole('button',{name:'Prověřit zakázku',exact:true}).click();
+ await page.getByRole('button',{name:'Otevřít zakázku',exact:true}).click();
  await expect(page.getByRole('alert')).toBeVisible();
  await page.getByTestId('fixture-it').click();
- await page.getByRole('button',{name:'Spustit demo audit',exact:true}).click();
+ await page.getByRole('button',{name:'Připravit ukázkovou nabídku',exact:true}).click();
  await page.getByTestId('simulate-payment').click();
- await expect(page.getByRole('heading',{name:'Pokračovat po vyjasnění podmínek'})).toBeVisible();
+ await page.getByRole('button',{name:'Simulovat kontrolu specialistkou'}).click();
+ await expect(page.getByRole('textbox',{name:'Upravit návrh nabídky'})).toHaveValue(/plán migrace/);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
 });

@@ -3,7 +3,7 @@
 | ID | Priority | Owner | Dependencies | Acceptance / tests | Status |
 |---|---|---|---|---|---|
 | M0 | P0 | Lead | preflight | coherent architecture, contracts, AGENTS, dependency lock | DONE |
-| M1 | P0 | Web/Lead | M0 | runnable React workspace, strict typing, unit tests, CI, browser journey | PARTIAL: build/DOM tests pass; real-browser tests blocked |
+| M1 | P0 | Web/Lead | M0 | runnable React workspace, strict typing, unit tests, CI, browser journey | DONE locally; GitHub CI not verified |
 | M2 | P0 | Database | M0 | local auth/provisioning + tenant RLS negative tests + storage isolation | PARTIAL: SQL only; NOT_RUN |
 | M3a | P0 | Sources | M1 | fixture normalization, inventory, document set hash | DONE, MOCKED source |
 | M3b | P0 | Documents | M2 | authenticated private uploads, bounded PDF/DOCX/XLSX/ZIP extraction and lineage tests | NOT_IMPLEMENTED |
@@ -11,7 +11,7 @@
 | M4b | P0 | AI | M3b | verified live provider API/model, structured outputs, limits and evaluation | NEEDS_VERIFICATION |
 | M5 | P0 | Jobs | M2/M4 | transactional claim, leases, retries, restart-safe completion/cancel tests | PARTIAL: lifecycle guard only |
 | M6 | P0 | Commerce | M2/M5 | Stripe sandbox signature verification, ledger/reservation RPC, race/replay tests | PARTIAL: isolated reference model only |
-| M7 | P0 | Web | M1/M4a | full local browser journey, same-data exports | PARTIAL: demo; DOCX and native PDF deferred |
+| M7 | P0 | Web | M1/M4a | requirements matrix, versioned specialist review, written handoff, editable forms and exports | PARTIAL: local demo and simulated review; production handoff pending |
 | M8 | P0 | Lead | M2–M7 | server limits, privacy/export/deletion, operations, security gates | NOT_IMPLEMENTED |
 | M9 | P1 | Future | all P0 | subscriptions, re-audits, profiles and PWA | DEFERRED |
 | M10 | P2 | Future | commercial platform | separate sales data boundary, provenance and reviewed outreach drafts | DEFERRED |

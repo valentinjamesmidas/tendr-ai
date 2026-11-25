@@ -1,6 +1,10 @@
-# tendr.ai — první spustitelný milník
+# tendr.ai — příprava nabídek pro veřejné zakázky
 
-České demo auditu veřejné zakázky: syntetický náhled → simulovaná platba → zjištění s citacemi → kvalifikace, finanční scénář, dotazy a checklist. Dvě ukázky: stavební zakázka a IT dodávka.
+tendr.ai připravuje nabídky na klíč pro malé firmy a OSVČ. Záměr služby počítá s písemným zadáním zakázky z NEN nebo E-ZAK, přípravou formulářů, kontrolou specialistkou a předáním balíčku. Dodavatel doplní svou cenu a doklady, nabídku podepíše a sám podá.
+
+V demu získáte matici požadavků s citacemi, kontrolní seznam a po simulované kontrole upravitelný balíček s krycím listem, pracovními vzory prohlášení, seznamem referencí a podklady pro JEO. Ukázky pokrývají stavební zakázku a IT dodávku.
+
+Cena služby je **9 999 Kč za nabídku** bez provize z výsledku zakázky. Platba v demu je simulovaná.
 
 ## Spuštění
 
@@ -32,7 +36,7 @@ PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium pnpm test:e2e
 
 Funguje lokální uživatelský průchod, přísná validace reference, výpočty v haléřích, ověřování citovaných pasáží a hash dokumentů. AI, zdroje zakázek a platba jsou výslovně simulované. Demo nepřijímá platební údaje ani soukromé soubory a nevytváří produkční oprávnění. Data relace se po obnovení stránky ztratí.
 
-Exporty: JSON report, Markdown zdroje/checklist a TXT návrh dotazů; Tisk/PDF používá prohlížeč. Nativní PDF a DOCX nejsou implementované.
+V Markdownu stáhnete upravený návrh nabídky, zdrojové texty a kontrolní seznam. Zjištění můžete vyexportovat jako JSON a dotazy jako TXT. Tisk do PDF zajišťuje prohlížeč.
 
 Supabase migrace a negativní SQL testy jsou připravený základ, zatím nejsou připojené k aplikaci. Docker ani Supabase CLI zde nejsou dostupné; databázové testy nebyly spuštěny. Přihlášení, skutečné NEN/Apify/Gemini integrace, Stripe webhook, trvalá fronta a worker zbývají. Produkt není připravený pro produkční provoz.
 

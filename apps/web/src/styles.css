@@ -3,3 +3,61 @@
 @media(max-width:1000px){.topbar-inner{gap:30px;padding:0 24px}.help-link{display:none}.landing,.workspace{padding-left:24px;padding-right:24px}.tender-heading{align-items:start;flex-direction:column;gap:18px}.summary-grid{grid-template-columns:repeat(2,1fr);gap:20px 0}.metric:nth-child(2){border:0}.metric strong{font-size:18px}.report-layout{grid-template-columns:1fr 270px;gap:16px}.tabs{gap:19px}.finding-meta{flex-wrap:wrap}.kind{margin-left:0}.preview-layout{grid-template-columns:1fr 300px}.hero h1{font-size:39px}.search-form input{font-size:11px}.tender-card h3{font-size:17px}.panel{padding:20px}.verdict{padding:20px}.verdict .status-pill{display:none}.benefits{gap:30px}}
 @media(max-width:720px){.topbar-inner{height:67px;padding:0 18px}.topbar nav{display:none}.brand{font-size:23px}.brand-mark{width:30px;height:32px}.header-end{gap:0}.demo-pill{font-size:9px}.demo-banner{font-size:9px;align-items:start;padding:9px 18px;justify-content:start}.demo-banner svg{flex-shrink:0;margin-top:2px}.landing,.workspace{padding-left:18px;padding-right:18px}.hero{padding:46px 0 40px}.hero h1{font-size:32px;letter-spacing:-1.1px;line-height:1.23}.hero-copy{font-size:12px;margin-top:17px}.desktop{display:none}.hero>.eyebrow{font-size:8px}.search-form{margin-top:24px;flex-wrap:wrap;padding:10px 12px;gap:8px;border-radius:9px}.search-form>svg{width:18px}.search-form input{width:calc(100% - 28px);flex:initial;font-size:10px;padding:10px 0}.search-form .primary{width:100%;font-size:11px;padding:11px}.search-hint{font-size:8px;gap:5px;flex-wrap:wrap}.search-hint>span{margin:0 3px}.section-line{align-items:start;flex-direction:column;gap:8px;margin-bottom:18px}.section-line h2{font-size:20px;margin-top:6px}.section-line>.subtle{font-size:9px}.tender-grid{grid-template-columns:1fr;gap:14px}.tender-card{padding:20px 20px 0}.tender-card h3{min-height:0}.tender-card p{margin-bottom:18px}.card-top{margin-bottom:15px}.card-bottom strong{font-size:16px}.benefits{grid-template-columns:1fr;gap:27px;padding:35px 0}.benefits h3{font-size:14px}.benefits p{max-width:none}.benefits svg{margin-bottom:7px}.pricing{flex-direction:column;align-items:stretch;padding:34px 0;gap:24px}.pricing h2{font-size:23px}.price-card{width:100%}footer{padding:22px 18px;gap:14px;flex-wrap:wrap}footer p{padding-left:14px}footer>span{width:100%;margin-left:0}.workspace{padding-top:20px}.breadcrumb{font-size:9px;flex-wrap:wrap;margin-bottom:21px}.tender-heading h1{font-size:24px}.tender-heading p{font-size:9px;flex-wrap:wrap}.tender-heading .eyebrow{font-size:9px}.heading-actions{width:100%}.heading-actions button{flex:1}.summary-grid{padding:17px 0;gap:19px 0;margin-bottom:23px}.metric{padding:0 13px;gap:5px}.metric>span{font-size:8px}.metric strong{font-size:15px}.metric small{font-size:8px;max-width:155px}.preview-layout{grid-template-columns:1fr;gap:17px}.panel{padding:18px}.panel-title h2{font-size:15px}.document-row strong{font-size:11px}.document-row small{font-size:9px}.audit-promo>.primary{margin-top:10px}.tabs{gap:21px;margin-bottom:20px}.tabs button{font-size:10px;padding-bottom:13px}.tabs button svg{width:14px}.verdict{padding:16px;gap:11px;margin-bottom:26px;align-items:start}.verdict-icon{width:30px;height:30px}.verdict-icon svg{width:18px}.verdict h2{font-size:15px;line-height:1.5}.verdict p{font-size:9px}.verdict .eyebrow{font-size:7px}.report-layout{grid-template-columns:1fr;gap:22px}.report-layout .section-line h2{font-size:19px}.filters{gap:5px}.filters button{font-size:9px;padding:5px 8px}.finding{padding:17px}.finding-meta{gap:7px}.finding-meta .kind{width:100%}.finding h3{font-size:14px}.finding>p{font-size:10px}.next-action{font-size:9px}.evidence-links button{font-size:8px;flex-wrap:wrap;text-align:left}.report-aside{display:grid;grid-template-columns:1fr;gap:14px}.next-panel{margin-top:0}.table-scroll{margin-left:-5px;margin-right:-5px}table{min-width:650px}.draft{min-height:500px;font-size:11px;padding:14px}.report-footnote p{font-size:8px}.modal-backdrop{padding:14px}.modal{padding:25px 20px}.modal h2{font-size:21px}.payment-price{padding:13px}.source-modal h2{font-size:19px}.source-modal pre{padding:13px;font-size:10px}.hash{display:block;margin-top:7px}.button-row{flex-wrap:wrap}}
 @media print{body{background:white;color:black;font-size:11px}.topbar,.demo-banner,.breadcrumb,.heading-actions,.tabs,.filters,footer,.primary,.secondary,.modal-backdrop,.report-aside,.button-row{display:none!important}.workspace{max-width:none;padding:0}.tender-heading h1{font-size:22px}.summary-grid{padding:14px 0;grid-template-columns:repeat(4,1fr)}.metric{padding:0 12px}.metric strong{font-size:13px}.report-layout{display:block}.finding,.panel,.verdict{break-inside:avoid;box-shadow:none;border-color:#ccc}.finding{margin-bottom:12px}.evidence-links{display:block}.evidence-links button{display:block}.report-footnote{margin-top:20px}.draft{border:0;min-height:900px}.verdict .status-pill{display:block}.report-layout .section-line{margin-bottom:12px}h2{font-size:18px}}
+
+.offer-package {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+}
+
+.requirements-table {
+  min-width: 540px;
+}
+
+.requirements-table tbody th {
+  width: 23%;
+  vertical-align: top;
+}
+
+.requirement-evidence + .requirement-evidence {
+  margin-top: 10px;
+}
+
+.requirement-evidence .text-button {
+  display: flex;
+  margin-top: 5px;
+}
+
+.offer-panel > label {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.offer-print {
+  display: none;
+}
+
+@media print {
+  .offer-print-view > .tender-heading,
+  .offer-print-view > .summary-grid,
+  .offer-print-view > .report-footnote,
+  .offer-package > :not(.offer-panel),
+  .offer-panel > :not(.offer-print) {
+    display: none;
+  }
+
+  .offer-panel {
+    padding: 0;
+    border: 0;
+    break-inside: auto;
+  }
+
+  .offer-print {
+    display: block;
+    font-family: inherit;
+    font-size: 11pt;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+}

@@ -1,4 +1,14 @@
-# Implementation status — 2026-11-09
+# Implementation status
+
+## Bid preparation — 2026-11-25
+
+The demo follows the bid-preparation workflow from the Notion brief. After simulated checkout it shows a sourced requirements matrix, then a simulated specialist review and an editable package for handoff. The package contains a cover sheet, sample declarations, a reference list, inputs for JEO when applicable and quoted attachment requirements. It exports as Markdown or through browser print. The checklist includes the fixture-specific attachments and prompts to confirm the deadline, clarifications and submission method.
+
+The service price is CZK 9,999 per bid without a commission. VAT treatment is pending. Written customer intake and handoff, live portal ingestion and change tracking, and authenticated specialist review are pending production work. No live payment or deployment was performed.
+
+Lint, typecheck, build, 30 unit and integration tests, and both Chromium end-to-end tests passed. The Chromium results supersede the historical launch blocker below.
+
+## First runnable milestone — 2026-11-09
 
 First runnable milestone delivered with a functional local demo vertical slice. Production P0 is incomplete. Repository originally empty; Node24.22.1/pnpm11.25.0/Git/package registry available; Docker and Supabase CLI absent.
 
