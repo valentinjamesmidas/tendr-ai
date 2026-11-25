@@ -14,7 +14,7 @@ it('prepares a sourced requirements matrix and hands off the bid after simulated
  await screen.findByRole('heading',{name:/Nabídka na klíč/});
  expect(screen.getByText(/9\s999\sKč za nabídku/)).toBeTruthy();
  await user.type(screen.getByLabelText('Číslo veřejné zakázky'),'invalid');
- await user.click(screen.getByRole('button',{name:'Otevřít zakázku'}));
+ await user.click(screen.getByRole('button',{name:'Zanalyzovat zakázku'}));
  expect((await screen.findByRole('alert')).textContent).toContain('N006');
  await user.click(screen.getByTestId('fixture-construction'));
  await screen.findByRole('heading',{name:'Dostupná dokumentace'});

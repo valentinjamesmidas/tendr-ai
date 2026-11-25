@@ -10,7 +10,7 @@
 .landing h1,
 .landing h2 {
   font-family: var(--display-font);
-  font-weight: 400;
+  font-weight: 830;
 }
 
 .landing h2 {
@@ -37,7 +37,7 @@
 }
 
 .landing-intro h1 {
-  font-size: clamp(3.4rem, 6.3vw, 6.25rem);
+  font-size: clamp(3.25rem, 6.1vw, 5.7rem);
   line-height: .98;
   letter-spacing: -.066em;
   text-wrap: balance;
@@ -196,25 +196,34 @@
 
 .workflow-steps {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   margin: 29px 0 0;
   padding: 0;
   border-top: 1px solid #567466;
   list-style: none;
+  counter-reset: workflow;
 }
 
 .workflow-steps li {
-  padding: 24px 30px 0 0;
+  display: grid;
+  grid-template-columns: 3ch 25px minmax(170px, .8fr) minmax(0, 1fr);
+  align-items: baseline;
+  gap: 15px;
+  padding: 21px 0;
+  border-bottom: 1px solid #567466;
+  counter-increment: workflow;
 }
 
-.workflow-steps li + li {
-  padding-inline-start: 30px;
-  border-inline-start: 1px solid #567466;
+.workflow-steps li::before {
+  content: counter(workflow, decimal-leading-zero);
+  color: #c0d6a8;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .workflow-steps svg {
-  margin-bottom: 14px;
   color: #c0d6a8;
+  align-self: start;
 }
 
 .workflow-steps h3 {
@@ -223,8 +232,7 @@
 }
 
 .workflow-steps p {
-  max-width: 32ch;
-  margin-top: 8px;
+  max-width: 58ch;
   color: #d1ddd0;
 }
 
@@ -233,10 +241,6 @@
 }
 
 .demo-heading {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, .82fr);
-  align-items: end;
-  gap: 23px 42px;
   margin-bottom: 25px;
 }
 
@@ -418,7 +422,7 @@
   margin: 7px 0;
   font-family: var(--display-font);
   font-size: clamp(2.6rem, 5vw, 4.7rem);
-  font-weight: 400;
+  font-weight: 830;
   letter-spacing: -.055em;
   line-height: 1.05;
 }
@@ -473,8 +477,7 @@
   }
 
   .landing-hero,
-  .pricing-section,
-  .demo-heading {
+  .pricing-section {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -499,27 +502,12 @@
     border-radius: 18px;
   }
 
-  .workflow-steps {
-    grid-template-columns: minmax(0, 1fr);
-    margin-top: 21px;
-  }
-
-  .workflow-steps li,
-  .workflow-steps li + li {
-    padding: 18px 0;
-    border-inline-start: 0;
-  }
-
-  .workflow-steps li + li {
-    border-top: 1px solid #567466;
-  }
+  .workflow-steps {margin-top: 21px;}
+  .workflow-steps li {grid-template-columns: 3ch 22px minmax(0, 1fr); gap: 7px 11px; padding: 17px 0;}
 
   .workflow-steps p {
+    grid-column: 3;
     max-width: none;
-  }
-
-  .workflow-steps svg {
-    margin-bottom: 6px;
   }
 }
 

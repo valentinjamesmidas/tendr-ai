@@ -12,3 +12,40 @@ export type JobState = 'created'|'awaiting_entitlement'|'queued'|'fetching_metad
 export interface AuditReport { id:string; reference:string; createdAt:string; documentSetHash:string; ruleVersion:string; provider:'mock'; model:'deterministic-fixture'; findings:Finding[]; verification:{passed:number;total:number;deliverable:boolean}; calculations:{dailyPenaltyMinor:number;scenarioDays:number;scenarioPenaltyMinor:number;retentionMinor:number}; verdict:'CONDITIONAL GO'|'NO-GO'; }
 export interface SourceProvider { normalizeReference(input:string):string; fetchMetadata(reference:string):Promise<Tender>; listDocuments(reference:string):Promise<SourceDocument[]>; downloadDocument(reference:string,documentId:string):Promise<SourceDocument>; getSourceVersion(reference:string):Promise<string>; }
 export interface AuditAIProvider { analyze(tender:Tender):Promise<Finding[]>; }
+
+export const nenFindingCategory = z.enum(['submission','qualification','attachments','evaluation','contract','technical','conflict']);
+export const nenFindingSchema = z.object({
+ id:z.string(),
+ category:nenFindingCategory,
+ severity:findingSchema.shape.severity,
+ title:z.string().min(1).max(180),
+ requirement:z.string().min(1).max(1500),
+ impact:z.string().min(1).max(1000),
+ action:z.string().min(1).max(1000),
+ evidence:z.array(evidenceSchema.extend({quote:z.string().min(12).max(450)})).min(1).max(4),
+});
+export type NenFinding = z.infer<typeof nenFindingSchema>;
+
+export const nenAnalysisSchema = z.object({
+ reference:referenceSchema,
+ title:z.string(),
+ authority:z.string().nullable(),
+ checkedAt:z.iso.datetime(),
+ bibliography:z.array(documentSchema.omit({content:true}).extend({fileId:z.string()})),
+ files:z.array(z.object({
+  id:z.string(),
+  name:z.string(),
+  status:z.enum(['read','partial','unreadable']),
+  notes:z.array(z.string()),
+ })),
+ findings:z.array(nenFindingSchema),
+ gaps:z.array(z.string()),
+ rejectedFindings:z.number().int().nonnegative(),
+});
+export type NenAnalysis = z.infer<typeof nenAnalysisSchema>;
+export const nenAnalysisEventSchema = z.discriminatedUnion('type',[
+ z.object({type:z.literal('progress'),stage:z.enum(['locating','downloading','reading','analyzing','verifying']),detail:z.string()}),
+ z.object({type:z.literal('result'),report:nenAnalysisSchema}),
+ z.object({type:z.literal('error'),message:z.string()}),
+]);
+export type NenAnalysisEvent = z.infer<typeof nenAnalysisEventSchema>;

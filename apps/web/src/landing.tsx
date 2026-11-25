@@ -1,33 +1,31 @@
 import {
   ArrowDown, ArrowRight, ArrowUpRight, Building2, Check, ClipboardCheck,
-  FileText, FolderOpen, Laptop, Search, ShieldCheck,
+  Download, FileText, FolderArchive, FolderOpen, Laptop, ShieldCheck,
 } from 'lucide-react';
 import { fixtures, formatMoney } from '@tendr/domain';
 import civicBuilding from './assets/civic-building.webp';
+import { NenIntake } from './nen-analysis';
 import './landing.css';
 
 interface LandingProps {
   price: string;
-  reference: string;
   invalidReference: boolean;
-  error: string;
-  onReferenceChange: (reference: string) => void;
   onOpenTender: (reference: string) => void;
 }
 
 const included = ['Matice požadavků s citacemi', 'Formuláře a kontrolní seznam', 'Kontrola specialistkou'];
 
-export function Landing({ price, reference, invalidReference, error, onReferenceChange, onOpenTender }: LandingProps) {
+export function Landing({ price, invalidReference, onOpenTender }: LandingProps) {
   const example = fixtures[0]!;
 
   return <main className="landing">
     <section className="landing-hero landing-container">
       <div className="landing-intro">
         <p className="landing-kicker">Pro malé firmy a živnostníky</p>
-        <h1>Nabídka na klíč<br className="hero-break"/> do veřejné zakázky</h1>
-        <p>Ze zadávací dokumentace připravíme formuláře, matici požadavků a kontrolní seznam. Před předáním balíček zkontroluje specialistka.</p>
+        <h1>Nabídka na klíč.<br className="hero-break"/> Stačí číslo NEN.</h1>
+        <p>Zadejte číslo veřejné zakázky. Z dostupných podkladů získáte přehled požadavků, rizik a kroků před podáním.</p>
         <div className="hero-actions">
-          <a className="primary" href="#ukazky">Vyzkoušet demo <ArrowRight size={18}/></a>
+          <a className="primary" href="#analyza">Zadat číslo NEN <ArrowRight size={18}/></a>
           <a className="quiet-link" href="#postup">Jak to funguje <ArrowDown size={15}/></a>
         </div>
         <p className="hero-price"><strong>{price} za nabídku</strong><span>Bez provize z výhry</span></p>
@@ -49,23 +47,39 @@ export function Landing({ price, reference, invalidReference, error, onReference
       </figure>
     </section>
 
+    <section className="nen-section landing-container" id="analyza">
+      <h2>Analýza podle čísla NEN</h2>
+      <p>Zadávejte jen číslo zakázky. Výsledek ukáže, které veřejné přílohy byly dostupné a které bude ještě potřeba ověřit.</p>
+      <NenIntake/>
+    </section>
+
     <section className="workflow" id="postup">
       <div className="landing-container">
-        <h2>Od zadání k podání</h2>
+        <h2>5 kroků od čísla k nabídce</h2>
         <ol className="workflow-steps">
           <li>
             <FolderOpen size={23}/>
-            <h3>Pošlete odkaz na zakázku</h3>
-            <p>Zadání z NEN nebo E-ZAK a doplňující podklady řešíme písemně.</p>
+            <h3>Zadejte číslo zakázky</h3>
+            <p>Číslo NEN propojí analýzu s konkrétní zakázkou. Podklady nemusíte nahrávat ručně.</p>
+          </li>
+          <li>
+            <Download size={23}/>
+            <h3>Dohledání podkladů</h3>
+            <p>Analýza pracuje s dostupnou zadávací dokumentací, smlouvou, přílohami i vysvětleními zadavatele.</p>
+          </li>
+          <li>
+            <FolderArchive size={23}/>
+            <h3>Rozbalení a čtení souborů</h3>
+            <p>ZIP se rozbalí. U dokumentů a tabulek uvidíte, co šlo přečíst a co vyžaduje ruční kontrolu.</p>
           </li>
           <li>
             <ClipboardCheck size={23}/>
-            <h3>Připravíme balíček</h3>
-            <p>Sestavíme požadavky s citacemi a připravíme formuláře. Výstup projde kontrolou specialistky.</p>
+            <h3>Kritické požadavky jako první</h3>
+            <p>U lhůt, kvalifikace, povinných formulářů a smluvních rizik dostanete citaci, dopad a konkrétní další krok.</p>
           </li>
           <li>
             <FileText size={23}/>
-            <h3>Doplníte cenu a podáte nabídku</h3>
+            <h3>Příprava a podání nabídky</h3>
             <p>Do balíčku doplníte cenu a své doklady. Nabídku podepíšete a podáte sami.</p>
           </li>
         </ol>
@@ -78,14 +92,6 @@ export function Landing({ price, reference, invalidReference, error, onReference
           <h2>Vyzkoušejte přípravu nabídky</h2>
           <p>Demo používá ukázkové zakázky. Platba i kontrola specialistkou jsou simulované.</p>
         </div>
-        <form className="reference-form" onSubmit={e => { e.preventDefault(); onOpenTender(reference); }}>
-          <label htmlFor="reference">Číslo veřejné zakázky</label>
-          <div className="reference-field">
-            <div className="reference-input"><Search size={18}/><input id="reference" value={reference} onChange={e => onReferenceChange(e.target.value)} placeholder={example.reference} autoComplete="off"/></div>
-            <button className="primary" type="submit">Otevřít zakázku <ArrowRight size={16}/></button>
-          </div>
-          {error && <p role="alert" className="error">{error}</p>}
-        </form>
       </div>
       {invalidReference && <p role="alert" className="error">Tato zakázka není v demo prostředí dostupná. Vyberte jednu z ukázek níže.</p>}
       <div className="demo-tenders">
@@ -121,8 +127,8 @@ export function Landing({ price, reference, invalidReference, error, onReference
 
     <section className="landing-container landing-faq" id="faq">
       <details>
-        <summary>Můžu v demu zadat vlastní zakázku?</summary>
-        <p>V demu můžete projít dvě připravené ukázky. Hotový balíček si stáhnete jako Markdown nebo vytisknete do PDF.</p>
+        <summary>Co když některý soubor chybí nebo je nečitelný?</summary>
+        <p>Výsledek označí nezpracované soubory a úseky. Neúplné podklady i rozporné požadavky najdete mezi body k ověření před podáním.</p>
       </details>
     </section>
   </main>;

@@ -56,7 +56,7 @@ test('validation and IT fixture on mobile',async({page})=>{
  await page.setViewportSize({width:390,height:844});
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
  await page.getByLabel('Číslo veřejné zakázky').fill('not-a-reference');
- await page.getByRole('button',{name:'Otevřít zakázku',exact:true}).click();
+ await page.getByRole('button',{name:'Zanalyzovat zakázku',exact:true}).click();
  await expect(page.getByRole('alert')).toBeVisible();
  await page.getByTestId('fixture-it').click();
  await page.getByRole('button',{name:'Připravit ukázkovou nabídku',exact:true}).click();
@@ -64,4 +64,39 @@ test('validation and IT fixture on mobile',async({page})=>{
  await page.getByRole('button',{name:'Simulovat kontrolu specialistkou'}).click();
  await expect(page.getByRole('textbox',{name:'Upravit návrh nabídky'})).toHaveValue(/plán migrace/);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+});
+
+test('NEN intake sends just the reference and shows the sourced result',async({page})=>{
+ const reference='N006/26/V00018665';
+ const quote='Lhůta pro podání nabídek končí 18. 12. 2026 v 9:00.';
+ await page.route('**/api/nen/analysis',async route=>{
+  if (route.request().method()==='GET') {
+   await route.fulfill({json:{available:true}});
+   return;
+  }
+  expect(route.request().postDataJSON()).toEqual({reference});
+  await route.fulfill({
+   contentType:'application/x-ndjson',
+   body:[
+    {type:'progress',stage:'reading',detail:'Čteme výzvu.'},
+    {type:'result',report:{
+     reference,title:'Testovací zakázka',authority:null,checkedAt:'2026-11-25T11:00:00.000Z',
+     bibliography:[{id:'F1.1',fileId:'F1',name:'Výzva.pdf',version:'1',locator:'Strana 2'}],
+     files:[{id:'F1',name:'Výzva.pdf',status:'partial',notes:['Strana 4 vyžaduje OCR.']}],
+     gaps:[],rejectedFindings:0,
+     findings:[{id:'R1',category:'submission',severity:'critical',title:'Lhůta pro podání',
+      requirement:quote,impact:'Po lhůtě se nabídka nevyhodnotí.',action:'Naplánujte podání s předstihem.',
+      evidence:[{documentId:'F1.1',version:'1',locator:'Strana 2',quote}]}],
+    }},
+   ].map(event=>JSON.stringify(event)).join('\n')+'\n',
+  });
+ });
+ await page.goto('/');
+ await page.getByRole('textbox',{name:'Číslo veřejné zakázky'}).fill('n006-26-v00018665');
+ await page.getByRole('button',{name:'Zanalyzovat zakázku'}).click();
+ await expect(page.getByRole('heading',{name:'Testovací zakázka'})).toBeVisible();
+ await expect(page.getByText('Naplánujte podání s předstihem.')).toBeVisible();
+ await page.getByText('Výzva.pdf · Strana 2').click();
+ await expect(page.locator('blockquote')).toHaveText(quote);
+ await expect(page.getByText('Strana 4 vyžaduje OCR.')).toBeVisible();
 });

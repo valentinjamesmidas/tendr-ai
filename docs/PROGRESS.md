@@ -1,5 +1,11 @@
 # Implementation status
 
+## NEN analysis pilot
+
+The homepage takes a single NEN reference and shows progress for lookup, download, extraction, analysis and verification. The Worker reads an authorized attachment manifest, handles bounded downloads and ZIP extraction, and passes text with locators to Workers AI. It reports unprocessed files and publishes only findings with exact evidence. The Czech homepage now uses Inter Tight and a five-step list, and the synthetic analysis prioritizes critical requirements.
+
+Local typecheck, lint, 34 unit and integration tests, three Chromium journeys and the Wrangler dry run passed. The local Worker served its assets and returned 503 for analysis with no source configured. The ingestion tests use a simulated resolver and model. A live authorized attachment resolver, end-to-end Workers AI acceptance on a real tender, OCR, and large or unsupported archives are pending. See [Deployment](DEPLOYMENT.md#nen-analysis-pilot) for the source contract.
+
 ## Bid preparation — 2026-11-25
 
 The demo follows the bid-preparation workflow from the Notion brief. After simulated checkout it shows a sourced requirements matrix, then a simulated specialist review and an editable package for handoff. The package contains a cover sheet, sample declarations, a reference list, inputs for JEO when applicable and quoted attachment requirements. It exports as Markdown or through browser print. The checklist includes the fixture-specific attachments and prompts to confirm the deadline, clarifications and submission method.
