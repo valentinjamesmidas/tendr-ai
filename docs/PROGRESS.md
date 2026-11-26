@@ -1,5 +1,11 @@
 # Implementation status
 
+## Interactive report, account and pricing — 2026-11-26
+
+The live report includes searchable findings, severity and category filters, an attachment inventory, and exact citations. Its bid action creates an editable Markdown draft and a checklist from the selected report. The homepage includes a downloadable illustrative offer for public procurement `N006/26/V00015697` and a comparison of Pro, Business and Enterprise.
+
+Customer accounts, sessions, the initial free credit and expiring analysis reservations use the Cloudflare D1 `CUSTOMERS` binding. A report with verified findings consumes one credit. Failed or unreadable runs release the reservation. Email addresses are not verified and there is no email-based recovery. The pricing CTAs create stored purchase requests with the selected period and amount. Card charging, automatic subscription renewal and paid credit provisioning require a payment provider and remain pending.
+
 ## NEN analysis pilot — 2026-11-26
 
 The homepage takes a single NEN reference and shows progress for lookup, download, extraction, analysis and verification. The production Cloudflare Worker resolves it through the ISVZ index and retrieves the public attachments from the applicable NEN XML profile. The Ministry for Regional Development profile also covers recent references beyond the index. The Worker handles bounded downloads and ZIP extraction and passes text with locators to Workers AI. The report identifies unreadable files and includes only findings with exact evidence. The Czech homepage uses Inter Tight and a five-step list.

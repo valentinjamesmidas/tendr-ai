@@ -1,22 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Link, useNavigate, useLocation } from 'react-router-dom';
-import { QueryClient, QueryClientProvider, useMutation } from '@tanstack/react-query';
-import { ArrowUpRight, ArrowRight, FileText, ShieldCheck, Building2, Check, CheckCircle2, ChevronRight, Download, X, CircleAlert, Layers3, Calculator, LayoutDashboard, ListChecks, MessageSquareText, FolderOpen, ExternalLink, LoaderCircle, Copy, Printer } from 'lucide-react';
+import { QueryClient, QueryClientProvider, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ArrowUpRight, ArrowRight, FileText, ShieldCheck, Building2, Check, CheckCircle2, ChevronRight, Download, X, CircleAlert, Layers3, Calculator, LayoutDashboard, ListChecks, MessageSquareText, FolderOpen, ExternalLink, LoaderCircle, Copy, Printer, Coins } from 'lucide-react';
 import { fixtures, normalizeReference, formatMoney, runAudit, calculateExposure } from '@tendr/domain';
-import type { Tender, SourceDocument } from '@tendr/schemas';
+import { customerAccountSchema, singleOfferPriceMinor, type CustomerAccount, type NenAnalysis, type PurchaseSelection, type Tender, type SourceDocument } from '@tendr/schemas';
 import { createOfferDraft, getOfferRequirements } from './offer-draft';
 import { OfferPackage } from './offer-package';
 import { Landing } from './landing';
+import { AccountDialog, LiveOfferDialog, SubscriptionDialog } from './customer-workflows';
+import { exampleOfferDraft, exampleTender } from './real-offer-example';
 import '@fontsource-variable/inter-tight';
 import './styles.css';
 
-const offerPriceMinor = 999_900;
 const offerPrice = new Intl.NumberFormat('cs-CZ', {
  style: 'currency',
  currency: 'CZK',
  maximumFractionDigits: 0,
-}).format(offerPriceMinor / 100);
+}).format(singleOfferPriceMinor / 100);
+const accountQueryKey=['customer-account'] as const;
 
 const categories: Record<string,string> = {all:'Všechny oblasti',financial:'Finanční',legal:'Smluvní',technical:'Technická',chronological:'Termíny',qualification:'Kvalifikace',conflict:'Rozpory'};
 const severity: Record<string,string> = {critical:'Kritické',high:'Vysoké',medium:'Střední',low:'Nízké'};
@@ -28,6 +30,17 @@ const date = (s:string) => new Intl.DateTimeFormat('cs-CZ',{dateStyle:'long'}).f
 function download(name:string,content:string,type='text/plain;charset=utf-8'){const url=URL.createObjectURL(new Blob([content],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 function App(){
  const navigate=useNavigate();const location=useLocation();const [error,setError]=useState('');
+ const queryClient=useQueryClient();
+ const accountQuery=useQuery({queryKey:accountQueryKey,queryFn:async ({signal})=>{
+  const response=await fetch('/api/account',{signal});
+  return response.ok?customerAccountSchema.parse(await response.json()).customer:null;
+ },retry:false});
+ const customer=accountQuery.data??null;
+ const [accountOpen,setAccountOpen]=useState(false);
+ const [purchase,setPurchase]=useState<PurchaseSelection|null>(null);
+ const [pendingPurchase,setPendingPurchase]=useState<PurchaseSelection|null>(null);
+ const [liveOffer,setLiveOffer]=useState<{report:NenAnalysis;example:boolean}|null>(null);
+ const [offerOpen,setOfferOpen]=useState(false);
  const ref=new URLSearchParams(location.search).get('reference');const tender=fixtures.find((t:Tender)=>t.reference===ref);
  const [tab,setTab]=useState('offer');const [filter,setFilter]=useState('all');const [paywall,setPaywall]=useState(false);const [source,setSource]=useState<SourceDocument|null>(null);const [days,setDays]=useState(30);const [checked,setChecked]=useState<string[]>([]);const [draft,setDraft]=useState('');const [copied,setCopied]=useState(false);
  const [editedOffer,setEditedOffer]=useState<string|null>(null);
@@ -47,6 +60,23 @@ function App(){
  const priorityCount = orderedFindings.filter(f=>severityOrder[f.severity]<=1).length;
  const offer=editedOffer??result?.offer??'';
  const checklist=tender&&result?checklistItems(tender,result.requirements):[];
+
+ function showOffer(report:NenAnalysis,example=false){
+  setLiveOffer({report,example});setOfferOpen(true);
+ }
+ function startPurchase(selection:PurchaseSelection){
+  setOfferOpen(false);
+  if(!customer&&selection.plan!=='enterprise'){
+   setPendingPurchase(selection);setAccountOpen(true);return;
+  }
+  setAccountOpen(false);setPurchase(selection);
+ }
+ function changeAccount(value:CustomerAccount|null){
+  void queryClient.cancelQueries({queryKey:accountQueryKey});
+  queryClient.setQueryData(accountQueryKey,value);
+  if(value&&pendingPurchase){setPurchase(pendingPurchase);setPendingPurchase(null);setAccountOpen(false);}
+ }
+ const buyCredit=()=>startPurchase({plan:'credit',billing:'once'});
 
  function openTender(value:string){try{const normalized=normalizeReference(value);if(!fixtures.some((t:Tender)=>t.reference===normalized))throw new Error('V demo režimu jsou dostupné pouze níže uvedené syntetické zakázky.');setError('');navigate(`/?reference=${encodeURIComponent(normalized)}`);window.scrollTo(0,0);}catch(e){setError(e instanceof Error?e.message:'Zadejte platné číslo zakázky.');}}
  function home(){
@@ -76,7 +106,10 @@ function App(){
     <Link to="/#ukazky">Ukázkové zakázky</Link>
     <Link to="/#pricing">Ceník</Link>
    </nav>
-   <Link className="primary header-cta" to="/#analyza">Zadat číslo NEN <ArrowUpRight size={16}/></Link>
+   <div className="customer-account-controls">
+    <button className="customer-account-button" type="button" onClick={()=>setAccountOpen(true)}>{customer?<><Coins size={16}/> {customer.credits} {customer.credits===1?'kredit':customer.credits>=2&&customer.credits<=4?'kredity':'kreditů'}</>:'Přihlásit se'}</button>
+    <Link className="primary header-cta" to="/#analyza">Zadat číslo NEN <ArrowUpRight size={16}/></Link>
+   </div>
   </div>
  </header>
  {tender&&<div className="demo-banner"><ShieldCheck size={14}/><span>Ukázková data. Platba i kontrola specialistkou jsou simulované.</span></div>}
@@ -84,6 +117,12 @@ function App(){
   price={offerPrice}
   invalidReference={!!ref}
   onOpenTender={openTender}
+  onCreateOffer={showOffer}
+  onSelectPlan={startPurchase}
+  onOpenExample={()=>showOffer(exampleTender,true)}
+  onOpenAccount={()=>setAccountOpen(true)}
+  onBuyCredit={buyCredit}
+  onAnalysisFinished={()=>void queryClient.invalidateQueries({queryKey:accountQueryKey})}
  />:<main className={report&&tab==='offer'&&reviewed?'workspace offer-print-view':'workspace'}><div className="breadcrumb"><button onClick={home}>Zakázky</button><ChevronRight size={13}/><span>{tender.reference}</span><span className="tag demo-tag">Syntetická ukázka</span></div><section className="tender-heading"><div><div className="eyebrow">{tender.sector==='construction'?'STAVEBNÍ PRÁCE':'IT A TECHNOLOGIE'}</div><h1>{tender.title}</h1><p><Building2 size={15}/>{tender.authority}<span className="dot">·</span><span className="mono">{tender.reference}</span></p></div><div className="heading-actions">{report?<><button className="secondary" onClick={()=>download(`audit-${tender.reference.replaceAll('/','-')}.json`,JSON.stringify({tender,report},null,2),'application/json')}><Download size={16}/> Export JSON</button>{(tab!=='offer'||reviewed)&&<button className="primary" onClick={()=>window.print()}><Printer size={16}/> Tisk sekce / PDF</button>}</>:<button className="primary" onClick={()=>setPaywall(true)}>Připravit ukázkovou nabídku <ArrowRight size={17}/></button>}</div></section>
  {error&&<p role="alert" className="error">{error}</p>}
  <div className="summary-grid"><div className="metric"><span>Předpokládaná hodnota</span><strong>{formatMoney(tender.valueMinor)}</strong><small>Bez DPH · syntetický údaj</small></div><div className="metric"><span>Lhůta pro podání nabídky</span><strong>{deadlineFormat.format(new Date(tender.deadline))}</strong><small>Ukázkový termín</small></div><div className="metric"><span>Zadávací dokumentace</span><strong>{tender.documents.length} dokumenty</strong><small><CheckCircle2 size={12}/> Připravené demo podklady</small></div><div className="metric"><span>{report?'Ověření citovaných pasáží':'Stav nabídky'}</span><strong className={report?'green':''}>{report?`${report.verification.passed} / ${report.verification.total}`:'Připraveno ke zpracování'}</strong><small>{report?'Nedokládá správnost právního výkladu':'Návrh ještě nebyl vytvořen'}</small></div></div>
@@ -110,6 +149,11 @@ function App(){
   <p>Příprava nabídek pro veřejné zakázky</p>
   <Link to="/#faq">O demo prostředí</Link>
  </footer>
+ {liveOffer&&<LiveOfferDialog key={`${liveOffer.report.reference}/${liveOffer.report.checkedAt}/${liveOffer.example}`}
+  report={liveOffer.report} open={offerOpen} exampleDraft={liveOffer.example?exampleOfferDraft:undefined}
+  onClose={()=>setOfferOpen(false)} onOrder={()=>startPurchase({plan:'offer',billing:'once',reference:liveOffer.report.reference})}/>}
+ {accountOpen&&<AccountDialog customer={customer} onAccountChange={changeAccount} onBuyCredit={buyCredit} onClose={()=>{setAccountOpen(false);setPendingPurchase(null);}}/>}
+ {purchase&&<SubscriptionDialog selection={purchase} customer={customer} onClose={()=>setPurchase(null)}/>}
  {paywall&&tender&&<div className="modal-backdrop" onClick={()=>!audit.isPending&&setPaywall(false)}>
   <section className="modal payment-modal" role="dialog" aria-modal="true" aria-labelledby="payment-title" onClick={e=>e.stopPropagation()}>
    <button className="close" aria-label="Zavřít" onClick={()=>setPaywall(false)} disabled={audit.isPending}><X size={21}/></button>

@@ -99,4 +99,42 @@ test('NEN intake sends just the reference and shows the sourced result',async({p
  await page.getByText('Výzva.pdf · Strana 2').click();
  await expect(page.locator('blockquote')).toHaveText(quote);
  await expect(page.getByText('Strana 4 vyžaduje OCR.')).toBeVisible();
+ await page.locator('.nen-report').getByRole('button',{name:'Vytvořit nabídku',exact:true}).first().click();
+ const offer=page.getByRole('dialog',{name:'Pracovní nabídka'});
+ await expect(offer.getByRole('textbox',{name:'Upravit návrh nabídky'})).toHaveValue(/Strana 2/);
+ await offer.getByRole('button',{name:/Kontrolní seznam/}).click();
+ await offer.getByRole('checkbox',{name:/Lhůta pro podání/}).check();
+ await expect(offer.getByRole('progressbar')).toHaveAttribute('value','1');
+});
+
+test('the public bid sample and annual plan lead to the expected actions',async({page})=>{
+ const account={id:'d561349b-1243-428b-9e7f-e44c647997fb',email:'tester@example.com',credits:1};
+ await page.route('**/api/account',async route=>{
+  if(route.request().method()==='GET'){await route.fulfill({json:{customer:null}});return;}
+  expect(route.request().postDataJSON()).toMatchObject({action:'register',email:account.email});
+  await route.fulfill({json:{customer:account}});
+ });
+ await page.route('**/api/subscription-requests',async route=>{
+  const body=route.request().postDataJSON();
+  expect(body).toMatchObject({selection:{plan:'business',billing:'annual'},email:account.email});
+  await route.fulfill({status:201,json:{requestId:body.requestId}});
+ });
+ await page.goto('/');
+ await page.getByRole('button',{name:'Otevřít ukázkovou nabídku',exact:true}).click();
+ const example=page.getByRole('dialog',{name:'Ukázková nabídka'});
+ await expect(example.getByRole('textbox',{name:'Upravit návrh nabídky'})).toHaveValue(/N006\/26\/V00015697/);
+ await example.getByRole('button',{name:'Zavřít',exact:true}).click();
+ await page.getByRole('button',{name:'Ročně',exact:true}).click();
+ await expect(page.getByRole('article',{name:'Business'})).toContainText(/200\s000\sKč/);
+ await page.getByRole('button',{name:'Zvolit Business',exact:true}).click();
+ const register=page.getByRole('dialog',{name:'Vytvořit účet'});
+ await register.getByLabel('E-mail',{exact:true}).fill(account.email);
+ await register.getByLabel('Heslo',{exact:true}).fill('test-password-not-used-in-production');
+ await register.getByRole('button',{name:'Vytvořit účet',exact:true}).click();
+ const order=page.getByRole('dialog',{name:'Poptávka',exact:true});
+ await expect(order).toContainText(/200\s000\sKč ročně/);
+ await order.getByRole('button',{name:'Odeslat poptávku'}).click();
+ await expect(page.getByRole('dialog',{name:'Poptávka uložena'})).toBeVisible();
+ await page.getByRole('button',{name:'Hotovo',exact:true}).click();
+ await expect(page.getByRole('button',{name:'1 kredit',exact:true})).toBeVisible();
 });

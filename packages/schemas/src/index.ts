@@ -49,3 +49,33 @@ export const nenAnalysisEventSchema = z.discriminatedUnion('type',[
  z.object({type:z.literal('error'),message:z.string()}),
 ]);
 export type NenAnalysisEvent = z.infer<typeof nenAnalysisEventSchema>;
+
+export const singleOfferPriceMinor = 999_900;
+export const analysisCreditPriceMinor = 99_900;
+export const plans = {
+ pro:{name:'Pro',monthlyMinor:500_000,includedOffers:1,includedAnalyses:1},
+ business:{name:'Business',monthlyMinor:2_000_000,annualMinor:20_000_000,includedAnalyses:5,extraAnalysisMinor:analysisCreditPriceMinor},
+ enterprise:{name:'Enterprise'},
+} as const;
+
+export const planSelectionSchema = z.discriminatedUnion('plan',[
+ z.object({plan:z.literal('pro'),billing:z.literal('monthly')}).strict(),
+ z.object({plan:z.literal('business'),billing:z.enum(['monthly','annual'])}).strict(),
+ z.object({plan:z.literal('enterprise'),billing:z.literal('monthly')}).strict(),
+]);
+export type PlanSelection = z.infer<typeof planSelectionSchema>;
+export const purchaseSelectionSchema = z.union([
+ planSelectionSchema,
+ z.object({plan:z.literal('credit'),billing:z.literal('once')}).strict(),
+ z.object({plan:z.literal('offer'),billing:z.literal('once'),reference:referenceSchema}).strict(),
+]);
+export type PurchaseSelection = z.infer<typeof purchaseSelectionSchema>;
+export const subscriptionRequestSchema = z.object({
+ requestId:z.uuid(),
+ selection:purchaseSelectionSchema,
+ email:z.string().trim().max(254).pipe(z.email()).transform(value=>value.toLowerCase()),
+ company:z.string().trim().max(150),
+}).strict();
+export const subscriptionReceiptSchema = z.object({requestId:z.uuid()}).strict();
+export const customerAccountSchema = z.object({customer:z.object({id:z.uuid(),email:z.email(),credits:z.number().int().nonnegative()}).nullable()});
+export type CustomerAccount = NonNullable<z.infer<typeof customerAccountSchema>['customer']>;

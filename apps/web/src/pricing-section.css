@@ -1,0 +1,290 @@
+.pricing-section {
+  padding-block: clamp(32px, 5.6vw, 82px) clamp(18px, 4vw, 45px);
+  border-top: 1px solid var(--line);
+}
+
+.pricing-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 22px;
+  margin-bottom: 27px;
+}
+
+.pricing-heading p {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 1.08rem;
+}
+
+.pricing-billing {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-self: end;
+  align-items: center;
+  gap: 3px;
+  padding: 4px;
+  border: 1px solid #d6ded2;
+  border-radius: 11px;
+  background: #ebeee5;
+}
+
+.pricing-billing button {
+  min-height: 38px;
+  padding-inline: 16px;
+  border-radius: 8px;
+  color: #425b4e;
+  font-size: .98rem;
+  font-weight: 700;
+}
+
+.pricing-billing button:hover {
+  background: #f3f6ee;
+}
+
+.pricing-billing button.active {
+  background: #fff;
+  color: #1c4134;
+  box-shadow: 0 1px 5px #1c413422;
+}
+
+.pricing-plans {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 15px;
+}
+
+.plan-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: start;
+  padding: clamp(19px, 2.4vw, 34px);
+  border: 1px solid #d7e0d4;
+  border-radius: 19px;
+  background: #fffdf6;
+}
+
+.plan-card-business {
+  border-color: #1d4839;
+  background: #183e32;
+  color: #f9f8ee;
+  box-shadow: 0 9px 20px #183e321b;
+}
+
+.plan-card-enterprise {
+  background: #e9efe3;
+}
+
+.plan-icon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1px solid #c9dbca;
+  border-radius: 10px;
+  background: #e4eddf;
+  color: #285344;
+}
+
+.plan-card-business .plan-icon {
+  border-color: #53786a;
+  background: #2d5748;
+  color: #def0bd;
+}
+
+.plan-card h3 {
+  margin-top: 13px;
+  font-size: clamp(1.6rem, 2.5vw, 2.3rem);
+  font-weight: 790;
+  line-height: 1.15;
+  letter-spacing: -.043em;
+}
+
+.plan-audience {
+  min-height: 3.2em;
+  margin-top: 7px;
+  color: #496153;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.plan-price-band {
+  width: 100%;
+  min-height: 76px;
+  margin-block: 19px 10px;
+}
+
+.plan-price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 7px;
+  line-height: 1.25;
+}
+
+.plan-price strong {
+  font-size: clamp(1.85rem, 3.25vw, 3.2rem);
+  font-weight: 790;
+  letter-spacing: -.061em;
+  white-space: nowrap;
+}
+
+.plan-price span,
+.plan-price-note {
+  color: #496153;
+  font-size: .94rem;
+}
+
+.plan-card-business .plan-price span,
+.plan-card-business .plan-price-note,
+.plan-card-business .plan-audience {
+  color: #d7e6d7;
+}
+
+.plan-card .plan-action,
+.one-off-plan > a,
+.pricing-credit-action {
+  min-height: 44px;
+  border-radius: 9px;
+  font-size: .99rem;
+  text-decoration: none;
+}
+
+.plan-card .plan-action {
+  justify-content: space-between;
+  width: 100%;
+}
+
+.plan-card-business .plan-action {
+  border-color: #dbefba;
+  background: #dbefba;
+  color: #17382b;
+}
+
+.plan-card-business .plan-action:hover {
+  border-color: #eaf4d6;
+  background: #eaf4d6;
+}
+
+.plan-card-business .plan-action:focus-visible {
+  outline-color: #dbefba;
+}
+
+.plan-features {
+  display: grid;
+  align-content: start;
+  width: 100%;
+  gap: 13px;
+  margin: 22px 0 0;
+  padding: 20px 0 0;
+  border-top: 1px solid #d9e3d5;
+  list-style: none;
+}
+
+.plan-features li {
+  display: flex;
+  align-items: start;
+  gap: 8px;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.plan-features svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: #32624e;
+}
+
+.plan-card-business .plan-features {
+  border-color: #527568;
+}
+
+.plan-card-business .plan-features svg {
+  color: #d6ecaa;
+}
+
+.one-off-plan {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 15px;
+  margin-top: 15px;
+  padding: clamp(15px, 2vw, 23px);
+  border: 1px solid #d9e2d6;
+  border-radius: 14px;
+  background: #eff2e8;
+}
+
+.one-off-plan h3,
+.pricing-credit h3 {
+  font-size: 1.22rem;
+  font-weight: 740;
+}
+
+.one-off-plan p,
+.pricing-credit p {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.pricing-credits {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.pricing-credit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: clamp(15px, 2vw, 23px);
+  border: 1px solid #d9e2d6;
+  border-radius: 14px;
+  background: #fffdf6;
+}
+
+@media (max-width: 940px) and (min-width: 761px) {
+  .plan-audience {
+    min-height: 4.65em;
+  }
+}
+
+@media (max-width: 760px) {
+  .pricing-heading {
+    flex-direction: column;
+    align-items: start;
+  }
+
+  .pricing-billing {
+    align-self: start;
+  }
+
+  .pricing-plans,
+  .pricing-credits {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .plan-price-band,
+  .plan-audience {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 490px) {
+  .one-off-plan {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .one-off-plan > a {
+    grid-column: 1 / -1;
+  }
+
+  .pricing-credit {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

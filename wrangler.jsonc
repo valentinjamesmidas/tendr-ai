@@ -12,7 +12,11 @@
     "NEN_PROFILE_SOURCES": "mmr"
   },
   "ratelimits": [
-    { "name": "NEN_RATE_LIMIT", "namespace_id": "260091", "simple": { "limit": 2, "period": 60 } }
+    { "name": "NEN_RATE_LIMIT", "namespace_id": "260091", "simple": { "limit": 2, "period": 60 } },
+    { "name": "CUSTOMER_RATE_LIMIT", "namespace_id": "260092", "simple": { "limit": 8, "period": 60 } }
+  ],
+  "d1_databases": [
+    { "binding": "CUSTOMERS", "database_name": "tendr-ai-customers", "database_id": "faa23db5-de14-4787-976c-205ff543e484" }
   ],
   "build": {
     "command": "pnpm build"
