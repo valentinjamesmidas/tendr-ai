@@ -137,24 +137,39 @@ export async function findInOfficialProfiles(reference:string, profiles:string[]
  const ranges:[Date,Date][] = [[archiveMonth&&archiveMonth>oldest ? archiveMonth : near,now]];
  if(archiveMonth&&archiveMonth<oldest&&archiveEnd&&archiveEnd>=archiveMonth)ranges.push([archiveMonth,archiveEnd]);
  else if(!archiveMonth)ranges.push([oldest,new Date(near.getTime()-day)]);
- let lastFailure:unknown;
+ let lastFailure:string|undefined;
  let exportsRead=0;
  for(const profile of candidates){
   for(const [start,end] of ranges){
+   let state='connection';
    try{
     const url=profileUrl(profile,start,end);
-    const response=await fetch(url,{redirect:'error',signal:AbortSignal.any([signal,AbortSignal.timeout(16000)]),headers:{Accept:'application/xml,text/xml'}});
+    const signalForRange=AbortSignal.any([signal,AbortSignal.timeout(16_000)]);
+    let response=await fetch(url,{redirect:'manual',signal:signalForRange,headers:{Accept:'application/xml,text/xml'}});
+    if([301,302,303,307,308].includes(response.status)){
+     state=`redirect:${response.status}`;
+     const destination=new URL(response.headers.get('location')??'',url);
+     await response.body?.cancel();
+     if(destination.origin!==nenOrigin||destination.username||destination.password||destination.hash
+        ||destination.pathname.toLowerCase().replace(/\/$/,'')!==url.pathname.toLowerCase()
+        ||destination.search!==url.search||destination.href===url.href)throw new Error('Unsupported profile redirect');
+     response=await fetch(destination,{redirect:'manual',signal:signalForRange,headers:{Accept:'application/xml,text/xml'}});
+    }
+    state=`http:${response.status}`;
     if(!response.ok)throw new Error(`NEN XML returned ${response.status}`);
+    state='body';
     const bytes=await readBounded(response.body,4*1024*1024);
+    state='xml';
     const manifest=parseNenProfileXml(new TextDecoder().decode(bytes),reference);
     exportsRead++;
     if(manifest)return manifest;
    }catch(error){
     signal.throwIfAborted();
-    lastFailure=error;
+    lastFailure=state;
+    console.warn('NEN XML fetch failed',{profile,stage:state,errorType:error instanceof Error ? error.name : 'Unknown'});
    }
   }
  }
- if(!exportsRead&&lastFailure)throw lastFailure;
+ if(!exportsRead&&lastFailure)throw new Error(`NEN XML unavailable (${lastFailure})`);
  return null;
 }
