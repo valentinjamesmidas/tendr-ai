@@ -1,10 +1,10 @@
 # Implementation status
 
-## NEN analysis pilot
+## NEN analysis pilot — 2026-11-26
 
-The homepage takes a single NEN reference and shows progress for lookup, download, extraction, analysis and verification. The Worker reads an authorized attachment manifest, handles bounded downloads and ZIP extraction, and passes text with locators to Workers AI. It reports unprocessed files and publishes only findings with exact evidence. The Czech homepage now uses Inter Tight and a five-step list, and the synthetic analysis prioritizes critical requirements.
+The homepage takes a single NEN reference and shows progress for lookup, download, extraction, analysis and verification. The production Cloudflare Worker resolves it through the ISVZ index and retrieves the public attachments from the applicable NEN XML profile. The Ministry for Regional Development profile also covers recent references beyond the index. The Worker handles bounded downloads and ZIP extraction and passes text with locators to Workers AI. The report identifies unreadable files and includes only findings with exact evidence. The Czech homepage uses Inter Tight and a five-step list.
 
-Local typecheck, lint, 34 unit and integration tests, three Chromium journeys and the Wrangler dry run passed. The local Worker served its assets and returned 503 for analysis with no source configured. The ingestion tests use a simulated resolver and model. A live authorized attachment resolver, end-to-end Workers AI acceptance on a real tender, OCR, and large or unsupported archives are pending. See [Deployment](DEPLOYMENT.md#nen-analysis-pilot) for the source contract.
+Production acceptance on `N006/26/V00034418` read four DOCX files and returned six findings with verified citations. Production verification on `N006/26/V00017834` reported that the scanned PDF required OCR. Local typecheck, lint, 36 unit and integration tests, three Chromium journeys and the Wrangler dry run passed. Nationwide coverage of recent and historical references, OCR, and large or unsupported archives remain partial. See [Deployment](DEPLOYMENT.md#nen-analysis-pilot) for coverage and file limits.
 
 ## Bid preparation — 2026-11-25
 

@@ -25,6 +25,8 @@ const candidateSchema = nenFindingSchema.omit({id:true}).extend({
 });
 const modelOutput = z.object({findings:z.array(candidateSchema).max(24)});
 const jsonSchema = z.toJSONSchema(modelOutput);
+const modelBatchLimit = 9;
+const modelConcurrency = 3;
 const severityOrder = {critical:0,high:1,medium:2,low:3};
 const sections = {
  submission:'lhůta a způsob podání',
@@ -212,21 +214,34 @@ export async function analyzeNen(reference:string, config:NenSourceConfig, gener
   }
  }
 
- for (const [index,batch] of batches.entries()) {
+ const scheduled = batches.slice(0,modelBatchLimit);
+ if (batches.length>scheduled.length) {
+  gaps.push('Část úseků přesáhla limit zpracování modelem.');
+  markUnanalyzed(batches.slice(scheduled.length).flat());
+ }
+ for (let offset=0;offset<scheduled.length;offset+=modelConcurrency) {
   signal.throwIfAborted();
-  if (index>=9) {
-   gaps.push('Část úseků přesáhla limit zpracování modelem.');
-   markUnanalyzed(batches.slice(index).flat());
-   break;
-  }
-  await update({type:'progress',stage:'analyzing',detail:`Porovnáváme požadavky a rizika. Skupina ${index+1} z ${Math.min(batches.length,9)}.`});
-  try {
+  const pending = scheduled.slice(offset,offset+modelConcurrency);
+  const from=offset+1;
+  const to=offset+pending.length;
+  const progress = from===to ? `Skupina ${from}` : `Skupiny ${from}–${to}`;
+  await update({type:'progress',stage:'analyzing',detail:`Porovnáváme požadavky a rizika. ${progress} z ${scheduled.length}.`});
+  const results = await Promise.allSettled(pending.map(batch=>{
    const data = batch.map(({id,name,locator,kind,publishedAt,content})=>({id,name,locator,kind,publishedAt,content}));
-   accept(await generate(reviewPrompt,JSON.stringify(data),jsonSchema),new Set(batch.map(part=>part.id)));
-   completedBatches++;
-  } catch {
-   gaps.push(`Model nedokončil analýzu skupiny ${index+1}.`);
-   markUnanalyzed(batch);
+   return generate(reviewPrompt,JSON.stringify(data),jsonSchema);
+  }));
+  signal.throwIfAborted();
+  for (const [index,result] of results.entries()) {
+   const batch=pending[index];
+   try {
+    if (result.status==='rejected') throw result.reason;
+    accept(result.value,new Set(batch.map(part=>part.id)));
+    completedBatches++;
+   } catch (error) {
+    console.warn('NEN model batch failed',{batch:offset+index+1,errorType:error instanceof Error ? error.name : 'Unknown'});
+    gaps.push(`Model nedokončil analýzu skupiny ${offset+index+1}.`);
+    markUnanalyzed(batch);
+   }
   }
  }
 
