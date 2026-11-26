@@ -16,6 +16,7 @@ const severity = {critical:'Kritické',high:'Vysoká priorita',medium:'Střední
 const fileStatus = {read:'Zpracováno',partial:'Částečně',unreadable:'Nezpracováno'};
 const genericError = 'Služba analýzy je dočasně nedostupná.';
 const checkedAtFormat = new Intl.DateTimeFormat('cs-CZ',{dateStyle:'medium',timeStyle:'short',timeZone:'Europe/Prague'});
+const monthFormat = new Intl.DateTimeFormat('cs-CZ',{month:'long',year:'numeric',timeZone:'Europe/Prague'});
 
 async function requestAnalysis(reference:string, signal:AbortSignal, onProgress:(detail:string)=>void) {
  const response = await fetch('/api/nen/analysis',{
@@ -134,6 +135,7 @@ function NenReport({report}:{report:NenAnalysis}) {
 export function NenIntake() {
  const [reference,setReference] = useState('');
  const [available,setAvailable] = useState<boolean|null>(null);
+ const [indexedThrough,setIndexedThrough] = useState<string|null>(null);
  const [progress,setProgress] = useState('');
  const [error,setError] = useState<{message:string;reference?:string}|null>(null);
  const [report,setReport] = useState<NenAnalysis|null>(null);
@@ -144,7 +146,13 @@ export function NenIntake() {
   void fetch('/api/nen/analysis',{signal:controller.signal})
    .then(response=>response.json())
    .then((state:unknown)=>{
-    if (!controller.signal.aborted) setAvailable(Boolean(state&&typeof state==='object'&&'available'in state&&state.available===true));
+    if (controller.signal.aborted) return;
+    if (!state||typeof state!=='object'||!('available'in state)) {setAvailable(false);return;}
+    setAvailable(state.available===true);
+    if ('coverage'in state&&state.coverage&&typeof state.coverage==='object'&&'through'in state.coverage
+      &&typeof state.coverage.through==='string'&&/^20\d\d-(0[1-9]|1[0-2])$/.test(state.coverage.through)) {
+     setIndexedThrough(state.coverage.through);
+    }
    })
    .catch(()=>{if (!controller.signal.aborted) setAvailable(false);});
   return ()=>controller.abort();
@@ -186,6 +194,7 @@ export function NenIntake() {
    </div>
   </form>
   {available===false&&<p className="nen-availability">Živá analýza čeká na připojení zdroje příloh. <a href="#ukazky">Vyzkoušejte ukázku.</a></p>}
+  {available===true&&indexedThrough&&<p className="nen-availability">Nejnovější export v indexu ISVZ je za {monthFormat.format(new Date(`${indexedThrough}-01T12:00:00Z`))}. Přílohy načítáme z aktuálního veřejného XML profilu zadavatele.</p>}
   {progress&&<p className="nen-progress" role="status"><LoaderCircle className="spin" size={18}/>{progress}</p>}
   {error&&<div className="error" role="alert">
    {error.message}

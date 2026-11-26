@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { referenceSchema, type NenAnalysisEvent } from '../packages/schemas/src/index';
 import { analyzeNen, NenSourceError } from './nen-analysis';
 import { readBounded } from './nen-files';
+import { getProfileSettings } from './nen-official';
+import { lookupPublicIndex, readPublicIndexMeta } from './nen-public-index';
 
 interface Bindings {
  ASSETS: {fetch(request:Request):Promise<Response>};
@@ -11,6 +13,8 @@ interface Bindings {
  NEN_SOURCE_URL?: string;
  NEN_SOURCE_TOKEN?: string;
  NEN_DOCUMENT_ORIGINS?: string;
+ NEN_PUBLIC_INDEX?: string;
+ NEN_PROFILE_SOURCES?: string;
 }
 const inputSchema = z.object({reference:referenceSchema}).strict();
 const model = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
@@ -20,12 +24,17 @@ function errorResponse(status:number,message:string) {
 }
 
 async function handleAnalysis(request:Request, env:Bindings, ctx:Pick<ExecutionContext,'waitUntil'>) {
+ const requestUrl=new URL(request.url);
+ const profiles=getProfileSettings(env.NEN_PROFILE_SOURCES);
+ const indexEnabled=env.NEN_PUBLIC_INDEX==='enabled';
+ const available=Boolean((env.NEN_SOURCE_URL||profiles.length||indexEnabled)&&env.AI&&env.NEN_RATE_LIMIT);
  if (request.method === 'GET') {
-  return Response.json({available:Boolean(env.NEN_SOURCE_URL&&env.AI&&env.NEN_RATE_LIMIT)},{headers:{'Cache-Control':'no-store'}});
+  const meta=indexEnabled&&!env.NEN_SOURCE_URL ? await readPublicIndexMeta(env.ASSETS,requestUrl.origin).catch(()=>undefined) : undefined;
+  return Response.json({available,coverage:meta},{headers:{'Cache-Control':'no-store'}});
  }
  if (request.method !== 'POST') return errorResponse(405,'Analýzu spusťte odesláním čísla NEN.');
  const origin = request.headers.get('Origin');
- if (origin && origin!==new URL(request.url).origin) return errorResponse(403,'Požadavek musí přijít z tendr.ai.');
+ if (origin && origin!==requestUrl.origin) return errorResponse(403,'Požadavek musí přijít z tendr.ai.');
  if (request.headers.get('Content-Type')?.split(';')[0].trim()!=='application/json') return errorResponse(415,'Očekáváme číslo NEN ve formátu JSON.');
  let reference: string;
  try {
@@ -34,7 +43,7 @@ async function handleAnalysis(request:Request, env:Bindings, ctx:Pick<ExecutionC
  } catch {
   return errorResponse(400,'Zadejte číslo ve formátu N006/26/V00018665.');
  }
- if (!env.NEN_SOURCE_URL || !env.AI || !env.NEN_RATE_LIMIT) {
+ if (!available || !env.AI || !env.NEN_RATE_LIMIT) {
   return errorResponse(503,'Živé stahování zatím není dostupné. Čeká na připojení a ověření schváleného zdroje příloh NEN.');
  }
  const quota = await env.NEN_RATE_LIMIT.limit({key:request.headers.get('CF-Connecting-IP')||'local'});
@@ -45,7 +54,13 @@ async function handleAnalysis(request:Request, env:Bindings, ctx:Pick<ExecutionC
  const encoder = new TextEncoder();
  const disconnect = new AbortController();
  const deadline = AbortSignal.any([request.signal,disconnect.signal,AbortSignal.timeout(360_000)]);
- const config = {providerUrl:env.NEN_SOURCE_URL,providerToken:env.NEN_SOURCE_TOKEN,allowedOrigins:env.NEN_DOCUMENT_ORIGINS};
+ const config = {
+  providerUrl:env.NEN_SOURCE_URL,
+  providerToken:env.NEN_SOURCE_TOKEN,
+  allowedOrigins:env.NEN_DOCUMENT_ORIGINS,
+  profiles,
+  lookupProfile:indexEnabled ? (reference:string)=>lookupPublicIndex(env.ASSETS,requestUrl.origin,reference) : undefined,
+ };
  const ai = env.AI;
  const send = (event:NenAnalysisEvent) => writer.write(encoder.encode(JSON.stringify(event)+'\n'));
  ctx.waitUntil(writer.closed.catch(()=>{disconnect.abort();}));

@@ -4,6 +4,7 @@ import {
 } from '../packages/schemas/src/index';
 import { verifyEvidence } from '../packages/verification/src/index';
 import { type ReadFile, fileLimit, readAttachment, readBounded } from './nen-files';
+import { findInOfficialProfiles, type FindProfile } from './nen-official';
 
 const manifestSchema = z.object({
  reference:referenceSchema,
@@ -13,7 +14,7 @@ const manifestSchema = z.object({
  documents:z.array(z.object({
   name:z.string().trim().min(1).max(350),
   downloadUrl:z.url().max(2000),
-  publishedAt:z.iso.datetime({offset:true}).optional(),
+  publishedAt:z.iso.datetime({offset:true,local:true}).optional(),
   kind:z.enum(['documentation','clarification','amendment','other']).default('documentation'),
  })).max(200),
 });
@@ -40,9 +41,11 @@ Každé zjištění musí uvést stručný title, přesný requirement (termín 
 Používej pouze skutečné ID úseku a jeho krátký doslovný souvislý citát, bez výpustek. Pro skutečný rozpor dolož obě odlišné pasáže ze dvou různých souborů. Pokud pozdější vysvětlení výslovně mění podmínku, cituj původní a novou informaci a označ změnu v requirement. Bez důkazu bod vynech. Raději několik konkrétních bodů než obecné rady.`;
 
 export interface NenSourceConfig {
- providerUrl:string;
+ providerUrl?:string;
  providerToken?:string;
  allowedOrigins?:string;
+ profiles?:string[];
+ lookupProfile?:FindProfile;
 }
 export class NenSourceError extends Error {}
 type Generate = (system: string, input: string, schema: typeof jsonSchema) => Promise<unknown>;
@@ -56,6 +59,18 @@ function httpsUrl(value:string) {
 }
 
 async function fetchManifest(reference:string, config:NenSourceConfig, signal:AbortSignal) {
+ if (!config.providerUrl) {
+  let manifest;
+  try {
+   manifest = await findInOfficialProfiles(reference,config.profiles??[],config.lookupProfile,signal);
+  } catch {
+   signal.throwIfAborted();
+   throw new NenSourceError('Strojový export zadavatele se nepodařilo načíst. Zkuste to později.');
+  }
+  if (!manifest) throw new NenSourceError('Číslo zatím není v pokrytí veřejných exportů tendr.ai. Zkontrolujte veřejný detail NEN.');
+  if (!manifest.documents.length) throw new NenSourceError('Profil k této zakázce neobsahuje veřejné přílohy ke stažení.');
+  return manifestSchema.parse(manifest);
+ }
  const url = httpsUrl(config.providerUrl);
  url.searchParams.set('reference',reference);
  const response = await fetch(url,{
@@ -70,6 +85,22 @@ async function fetchManifest(reference:string, config:NenSourceConfig, signal:Ab
  if (!manifest.success || manifest.data.reference !== reference) throw new NenSourceError('Zdroj nevrátil platný seznam pro zadanou zakázku.');
  if (!manifest.data.documents.length) throw new NenSourceError('Zdroj nenašel žádné veřejně dostupné přílohy k analýze.');
  return manifest.data;
+}
+
+function downloadName(disposition:string|null,fallback:string) {
+ const encoded=disposition?.match(/filename\*\s*=\s*UTF-8'[^']*'([^;]+)/i)?.[1];
+ const name=disposition?.match(/filename\s*=\s*(?:"([^"]+)"|([^;]+))/i);
+ let value=name?.[1]??name?.[2]??'';
+ if (encoded) {
+  try {value=decodeURIComponent(encoded.trim());} catch { /* use the plain filename */ }
+ }
+ value=value.replace(/\p{Cc}/gu,'').split(/[/\\]/).at(-1)?.trim()??'';
+ if (!value || value==='.' || value==='..') return fallback;
+ if (!/\.[a-zA-Z0-9]{1,8}$/.test(value)) {
+  const extension = fallback.match(/\.[a-zA-Z0-9]{1,8}$/)?.[0]??'';
+  return value.slice(0,250)+extension;
+ }
+ return value.length<=350 ? value : fallback;
 }
 
 async function downloadAttachment(attachment:Attachment, origins:Set<string>, limit:number, signal:AbortSignal) {
@@ -91,7 +122,8 @@ async function downloadAttachment(attachment:Attachment, origins:Set<string>, li
    await response.body?.cancel();
    throw new NenSourceError('Soubor překročil velikostní limit.');
   }
-  return readBounded(response.body,limit);
+  const name=downloadName(response.headers.get('content-disposition'),attachment.name);
+  return {name,bytes:await readBounded(response.body,limit)};
  }
  throw new NenSourceError('Stahování opakovaně přesměrovalo.');
 }
@@ -107,6 +139,7 @@ export async function analyzeNen(reference:string, config:NenSourceConfig, gener
  let bytesRemaining = 24 * 1024 * 1024;
  let textRemaining = 140_000;
  if (!manifest.complete) gaps.push('Zdroj nepotvrdil úplnost seznamu příloh a vysvětlení.');
+ if (!config.providerUrl) gaps.push('Výsledek vychází z veřejného XML exportu profilu zadavatele. Jmenovitě zpřístupněné dokumenty jsou mimo tento export.');
 
  function register(file:ReadFile, attachment:Attachment, version:string) {
   const id = `F${files.length+1}`;
@@ -125,12 +158,12 @@ export async function analyzeNen(reference:string, config:NenSourceConfig, gener
   try {
    if (index >= 15 || bytesRemaining <= 0 || textRemaining <= 0 || files.length >= 200) throw new NenSourceError('Příloha přesáhla rozsah jedné analýzy.');
    await update({type:'progress',stage:'downloading',detail:`Stahujeme soubor ${index+1} z ${manifest.documents.length}.`});
-   const bytes = await downloadAttachment(attachment,origins,Math.min(fileLimit,bytesRemaining),signal);
+   const {name,bytes} = await downloadAttachment(attachment,origins,Math.min(fileLimit,bytesRemaining),signal);
    bytesRemaining -= bytes.length;
-   await update({type:'progress',stage:'reading',detail:`Čteme ${attachment.name}.`});
+   await update({type:'progress',stage:'reading',detail:`Čteme ${name}.`});
    const digest = await crypto.subtle.digest('SHA-256',bytes);
    const version = Array.from(new Uint8Array(digest), byte=>byte.toString(16).padStart(2,'0')).join('');
-   for (const file of await readAttachment(attachment.name,bytes)) register(file,attachment,version);
+   for (const file of await readAttachment(name,bytes)) register(file,attachment,version);
   } catch (error) {
    signal.throwIfAborted();
    register({name:attachment.name,parts:[],notes:[error instanceof NenSourceError ? error.message : 'Soubor se nepodařilo načíst v dostupném rozsahu.']},attachment,'');

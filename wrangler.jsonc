@@ -7,6 +7,10 @@
     "enabled": true
   },
   "ai": { "binding": "AI" },
+  "vars": {
+    "NEN_PUBLIC_INDEX": "enabled",
+    "NEN_PROFILE_SOURCES": "mmr"
+  },
   "ratelimits": [
     { "name": "NEN_RATE_LIMIT", "namespace_id": "260091", "simple": { "limit": 2, "period": 60 } }
   ],

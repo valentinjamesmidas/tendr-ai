@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TextReader, Uint8ArrayReader, Uint8ArrayWriter, ZipWriter } from '@zip.js/zip.js';
 import { analyzeNen } from '../../worker/nen-analysis';
 import { readAttachment } from '../../worker/nen-files';
+import { parseNenProfileXml } from '../../worker/nen-official';
+import { lookupPublicIndex } from '../../worker/nen-public-index';
 import worker from '../../worker';
 import { nenAnalysisSchema, type NenAnalysisEvent } from '../../packages/schemas/src/index';
 
@@ -18,6 +20,13 @@ function manifest(documents:object[], complete=true) {
  return Response.json({reference,title:'Oprava knihovny',authority:'Město',complete,documents});
 }
 const due='Lhůta pro podání nabídek končí 18. 12. 2026 v 9:00.';
+const profileXml=`<profil xmlns="urn:cz:isvz:mmr:schemas:vz-z-profilu-zadavatele:v100">
+ <zadavatel><nazev_zadavatele>Ministerstvo</nazev_zadavatele></zadavatel>
+ <zakazka><id_objektu>N006/26/V00018666</id_objektu><nazev_vz>Jiná zakázka</nazev_vz><dokumenty><dokument><url>https://nen.nipez.cz/file?id=42&amp;typ=.txt</url></dokument></dokumenty></zakazka>
+ <zakazka><id_objektu>${reference}</id_objektu><nazev_vz>Knihovna</nazev_vz><dokumenty>
+ <dokument><url>https://nen.nipez.cz/file?id=18&amp;amp;typ=.txt</url><typ_dokumentu>zadávací dokumentace</typ_dokumentu><cas_vlozeni_na_profil>2026-11-24T12:30:00</cas_vlozeni_na_profil></dokument>
+ <dokument><url>https://outside.example/file?id=19</url><typ_dokumentu>vysvětlení zadávací dokumentace</typ_dokumentu></dokument>
+ </dokumenty></zakazka></profil>`;
 const aiFinding={
  category:'submission',
  severity:'critical',
@@ -30,6 +39,38 @@ const aiFinding={
 afterEach(()=>vi.unstubAllGlobals());
 
 describe('NEN ingestion',()=>{
+ it('uses only URLs belonging to the exact tender in the official XML and reports rejected links',()=>{
+  const result=parseNenProfileXml(profileXml,reference);
+  expect(result).toMatchObject({reference,title:'Knihovna',authority:'Ministerstvo',complete:false});
+  expect(result?.documents).toEqual([{
+   name:'zadávací dokumentace 1.txt',
+   downloadUrl:'https://nen.nipez.cz/file?id=18&typ=.txt',
+   kind:'documentation',
+   publishedAt:'2026-11-24T12:30:00',
+  }]);
+  expect(parseNenProfileXml(profileXml,'N006/26/V00099999')).toBeNull();
+  expect(()=>parseNenProfileXml('<html/>',reference)).toThrow('not NEN profile');
+ });
+
+ it('resolves the NEN number through the ISVZ index and analyzes documents returned by the official export',async()=>{
+  const assets={fetch:vi.fn(async (request:Request)=>{
+   expect(new URL(request.url).pathname).toBe('/nen-index/26.json');
+   return Response.json({[reference]:['mmr','2026-10']});
+  })};
+  const remote=vi.fn(async (url:URL)=>{
+   if(url.pathname==='/profil/mmr/XMLdataVZ')return new Response(profileXml,{headers:{'Content-Type':'application/xml'}});
+   expect(url.href).toBe('https://nen.nipez.cz/file?id=18&typ=.txt');
+   return new Response(due,{headers:{'Content-Disposition':"attachment; filename*=UTF-8''V%C3%BDzva.txt"}});
+  });
+  vi.stubGlobal('fetch',remote);
+  const model=vi.fn(async()=>({findings:[{...aiFinding,evidence:[{documentId:'F1.1',quote:due}]}]}));
+  const report=await analyzeNen(reference,{lookupProfile:(ref)=>lookupPublicIndex(assets,'https://tendr.example',ref)},
+   model,async()=>{},new AbortController().signal);
+  expect(report.files).toEqual([{id:'F1',name:'Výzva.txt',status:'read',notes:[]}]);
+  expect(report.findings[0].evidence[0].quote).toBe(due);
+  expect(remote).toHaveBeenCalledTimes(2);
+ });
+
  it('finds a manifest by number, opens ZIP, extracts DOCX and XLSX, and rejects ungrounded findings',async()=>{
   const word=await zip({'word/document.xml':'<w:document xmlns:w="urn:word"><w:body><w:p><w:r><w:t>Doložte dvě reference stavebních prací.</w:t></w:r></w:p></w:body></w:document>'});
   const workbook=await zip({'xl/worksheets/sheet1.xml':'<worksheet><sheetData><row r="3"><c r="A3" t="inlineStr"><is><t>Výkop ve skalním podloží</t></is></c></row></sheetData></worksheet>'});
